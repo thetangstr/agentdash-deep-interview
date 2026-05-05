@@ -95,11 +95,102 @@ function maturityLevelHTML(currentLevel, maxLevel = 5) {
 }
 
 /**
+ * Build the 9 project-slide HTML blocks for project-track assessments.
+ */
+function buildProjectSlides({ problemStatement, goNoGo, businessCase, workflowDef, systemsSection, agentTierSection, closedLoop, successMetrics, riskGovernance, pilotScope, implementationBacklog, company, date, totalSlides }) {
+  return `
+  <!-- Slide P1: Project Cover -->
+  <div class="slide slide-cover project-slide active" data-slide="1">
+    <div class="logo">AgentDash</div>
+    <div class="cover-eyebrow">Project Charter</div>
+    <div class="cover-title">${truncate(problemStatement || company, 10)}</div>
+    <div class="cover-company">${company}</div>
+    <div class="cover-meta">
+      <span>${date}</span>
+      <span>Project Assessment</span>
+    </div>
+    <div class="slide-num">1 / ${totalSlides}</div>
+  </div>
+
+  <!-- Slide P2: Problem Statement -->
+  <div class="slide slide-opportunity project-slide" data-slide="2">
+    <div class="logo">AgentDash</div>
+    <div class="section-label">The Problem</div>
+    <h2 class="slide-title">Problem Statement</h2>
+    <p class="opportunity-body">${truncate(problemStatement || 'No problem statement provided.', 120)}</p>
+    <div class="slide-num">2 / ${totalSlides}</div>
+  </div>
+
+  <!-- Slide P3: Go / No-Go -->
+  <div class="slide slide-tier project-slide" data-slide="3">
+    <div class="logo">AgentDash</div>
+    <div class="section-label">Decision</div>
+    <h2 class="slide-title">Go / No-Go Decision</h2>
+    <p class="opportunity-body">${truncate(goNoGo || 'Verdict not yet determined.', 200)}</p>
+    <div class="slide-num">3 / ${totalSlides}</div>
+  </div>
+
+  <!-- Slide P4: Business Case -->
+  <div class="slide slide-opportunity project-slide" data-slide="4">
+    <div class="logo">AgentDash</div>
+    <div class="section-label">Why This Project</div>
+    <h2 class="slide-title">Business Case</h2>
+    <p class="opportunity-body">${truncate(businessCase || 'No business case provided.', 200)}</p>
+    <div class="slide-num">4 / ${totalSlides}</div>
+  </div>
+
+  <!-- Slide P5: Workflow Definition -->
+  <div class="slide slide-gap project-slide" data-slide="5">
+    <div class="logo">AgentDash</div>
+    <div class="section-label">How It Works</div>
+    <h2 class="slide-title">Workflow Definition</h2>
+    <p class="opportunity-body">${truncate(workflowDef || 'No workflow defined.', 300)}</p>
+    <div class="slide-num">5 / ${totalSlides}</div>
+  </div>
+
+  <!-- Slide P6: Systems & Integrations -->
+  <div class="slide slide-maturity project-slide" data-slide="6">
+    <div class="logo">AgentDash</div>
+    <div class="section-label">Technical Scope</div>
+    <h2 class="slide-title">Systems &amp; Integrations</h2>
+    <p class="opportunity-body">${truncate(systemsSection || 'No systems listed.', 300)}</p>
+    <div class="slide-num">6 / ${totalSlides}</div>
+  </div>
+
+  <!-- Slide P7: Agent Architecture -->
+  <div class="slide slide-tier project-slide" data-slide="7">
+    <div class="logo">AgentDash</div>
+    <div class="section-label">Technical Decision</div>
+    <h2 class="slide-title">Agent Architecture</h2>
+    <p class="opportunity-body">${truncate(agentTierSection || 'No tier specified.', 200)}</p>
+    <div class="slide-num">7 / ${totalSlides}</div>
+  </div>
+
+  <!-- Slide P8: Success Metrics -->
+  <div class="slide slide-roadmap project-slide" data-slide="8">
+    <div class="logo">AgentDash</div>
+    <div class="section-label">Measuring Success</div>
+    <h2 class="slide-title">Success Metrics</h2>
+    <p class="opportunity-body">${truncate(successMetrics || 'No metrics defined.', 300)}</p>
+    <div class="slide-num">8 / ${totalSlides}</div>
+  </div>
+
+  <!-- Slide P9: Pilot Scope & Risk -->
+  <div class="slide slide-cta project-slide" data-slide="9">
+    <div class="logo">AgentDash</div>
+    <div class="section-label">Next Steps</div>
+    <h2 class="slide-title">Pilot Scope &amp; Risk Register</h2>
+    <p class="opportunity-body"><strong>Pilot:</strong> ${truncate(pilotScope || 'Scope not defined.', 150)}</p>
+    <p class="opportunity-body" style="margin-top:16px;"><strong>Risk &amp; Governance:</strong> ${truncate(riskGovernance || 'No risk register.', 150)}</p>
+    <div class="slide-num">9 / ${totalSlides}</div>
+  </div>`;
+}
+
+/**
  * Generate the full HTML presentation.
  */
-function generateHTML({ companyName, specMarkdown, sections, slug }) {
-  // Extract content
-  const problemStatement = stripMarkdown(sections['problem_statement'] || sections['executive_summary'] || '');
+function generateHTML({ companyName, specMarkdown, sections, slug, track = 'company' }) {
+  // Extract content — company track
   const executiveSummary = stripMarkdown(sections['executive_summary'] || '');
   const aiMaturity = stripMarkdown(sections['ai_adoption_maturity___current_state'] || '');
   const tierSection = stripMarkdown(sections['tier_recommendation'] || '');
@@ -109,6 +200,24 @@ function generateHTML({ companyName, specMarkdown, sections, slug }) {
   const blockers = stripMarkdown(sections['key_blockers_identified'] || '');
   const orgReadiness = stripMarkdown(sections['org_readiness_breakdown'] || '');
 
+  // Extract content — project track
+  const problemStatement = stripMarkdown(
+    sections['problem_statement'] ||
+    sections['project_brief'] ||
+    sections['executive_summary'] ||
+    ''
+  );
+  const goNoGo = stripMarkdown(sections['go__no_go_decision'] || sections['verdict'] || '');
+  const businessCase = stripMarkdown(sections['business_case'] || '');
+  const workflowDef = stripMarkdown(sections['workflow_definition'] || '');
+  const systemsSection = stripMarkdown(sections['systems___integrations'] || sections['systems'] || '');
+  const agentTierSection = stripMarkdown(sections['agent_tier'] || sections['tier_recommendation'] || '');
+  const closedLoop = stripMarkdown(sections['closed_loop_architecture'] || '');
+  const successMetrics = stripMarkdown(sections['success_metrics'] || '');
+  const riskGovernance = stripMarkdown(sections['risk___governance'] || sections['risk_register'] || '');
+  const pilotScope = stripMarkdown(sections['pilot_scope'] || sections['implementation_backlog'] || '');
+  const implementationBacklog = stripMarkdown(sections['implementation_backlog'] || '');
+
   // Company name from slug or seed
   const company = companyName || slug.replace(/deep_interview_/g, '').replace(/_/g, ' ').replace(/-/g, ' ');
   const date = new Date().toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' });
@@ -116,12 +225,15 @@ function generateHTML({ companyName, specMarkdown, sections, slug }) {
   // Estimate current maturity level from content
   const maturityLevel = 2; // default; model should ideally pass this in
 
+  const isProject = track === 'project';
+  const totalSlides = isProject ? 9 : 8;
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI Adoption Readiness — ${company}</title>
+  <title>${isProject ? 'Project Charter' : 'AI Adoption Readiness'} — ${company}</title>
   <style>
     :root {
       --bg: #0a0a0f;
@@ -853,14 +965,35 @@ function generateHTML({ companyName, specMarkdown, sections, slug }) {
       .nav { display: none; }
       .slide { position: relative; display: flex !important; page-break-after: always; height: auto; min-height: 100vh; }
     }
+
+    .disclaimer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(10, 10, 15, 0.95);
+      color: #8888a0;
+      font-size: 12px;
+      text-align: center;
+      padding: 8px 16px;
+      border-top: 1px solid #2a2a3a;
+      z-index: 100;
+    }
   </style>
 </head>
 <body>
 
-<div class="deck" id="deck">
+<div class="deck" id="deck" data-track="${track}">
+  ${isProject ? buildProjectSlides({ problemStatement, goNoGo, businessCase, workflowDef, systemsSection, agentTierSection, closedLoop, successMetrics, riskGovernance, pilotScope, implementationBacklog, company, date, totalSlides }) : ''}
+
+  <!-- Company slides (hidden when track=project) -->
+  <style>
+    [data-track="project"] .company-slide { display: none !important; }
+    [data-track="company"] .project-slide { display: none !important; }
+  </style>
 
   <!-- Slide 1: Cover -->
-  <div class="slide slide-cover active" data-slide="1">
+  <div class="slide slide-cover active company-slide" data-slide="1">
     <div class="logo">AgentDash</div>
     <div>
       <div class="cover-eyebrow">AI Adoption Readiness Assessment</div>
@@ -875,7 +1008,7 @@ function generateHTML({ companyName, specMarkdown, sections, slug }) {
   </div>
 
   <!-- Slide 2: The Opportunity -->
-  <div class="slide slide-opportunity" data-slide="2">
+  <div class="slide slide-opportunity company-slide" data-slide="2">
     <div class="logo">AgentDash</div>
     <div class="section-label">The Problem</div>
     <h2>${truncate(problemStatement || executiveSummary, 60) || 'Every organisation is evaluating AI adoption — but most are moving without a clear map.'}</h2>
@@ -887,7 +1020,7 @@ function generateHTML({ companyName, specMarkdown, sections, slug }) {
   </div>
 
   <!-- Slide 3: Where You Are (Maturity) -->
-  <div class="slide slide-maturity" data-slide="3">
+  <div class="slide slide-maturity company-slide" data-slide="3">
     <div class="logo">AgentDash</div>
     <div class="section-label">Current State</div>
     <h2 class="slide-title">Where Does Your Organisation Sit?</h2>
@@ -925,7 +1058,7 @@ function generateHTML({ companyName, specMarkdown, sections, slug }) {
   </div>
 
   <!-- Slide 4: The Tier That Fits -->
-  <div class="slide slide-tier" data-slide="4">
+  <div class="slide slide-tier company-slide" data-slide="4">
     <div class="logo">AgentDash</div>
     <div class="section-label">Starting Point</div>
     <h2 class="slide-title">Which Agent Tier Is Right for You?</h2>
@@ -971,7 +1104,7 @@ function generateHTML({ companyName, specMarkdown, sections, slug }) {
   </div>
 
   <!-- Slide 5: The Gap (Layers) -->
-  <div class="slide slide-gap" data-slide="5">
+  <div class="slide slide-gap company-slide" data-slide="5">
     <div class="logo">AgentDash</div>
     <div class="section-label">Technical Gap</div>
     <h2 class="slide-title">The Agent Factory Layers</h2>
@@ -1034,7 +1167,7 @@ function generateHTML({ companyName, specMarkdown, sections, slug }) {
   </div>
 
   <!-- Slide 6: Your First Pilot -->
-  <div class="slide slide-pilot" data-slide="6">
+  <div class="slide slide-pilot company-slide" data-slide="6">
     <div class="logo">AgentDash</div>
     <div class="section-label">First 4 Weeks</div>
     <h2 class="slide-title">Your First Pilot</h2>
@@ -1069,7 +1202,7 @@ function generateHTML({ companyName, specMarkdown, sections, slug }) {
   </div>
 
   <!-- Slide 7: Path Forward -->
-  <div class="slide slide-roadmap" data-slide="7">
+  <div class="slide slide-roadmap company-slide" data-slide="7">
     <div class="logo">AgentDash</div>
     <div class="section-label">Strategic Roadmap</div>
     <h2 class="slide-title">The Path to Scale</h2>
@@ -1110,7 +1243,7 @@ function generateHTML({ companyName, specMarkdown, sections, slug }) {
   </div>
 
   <!-- Slide 8: Why AgentDash -->
-  <div class="slide slide-cta" data-slide="8">
+  <div class="slide slide-cta company-slide" data-slide="8">
     <div class="logo">AgentDash</div>
     <div class="cta-title">Here's What It Takes to Get to the Next Level</div>
     <div class="cta-body">
@@ -1138,7 +1271,7 @@ function generateHTML({ companyName, specMarkdown, sections, slug }) {
 </div>
 
 <script>
-  const TOTAL = 8;
+  const TOTAL = ${totalSlides};
   let current = 1;
 
   function show(n) {
@@ -1181,6 +1314,7 @@ function generateHTML({ companyName, specMarkdown, sections, slug }) {
 </script>
 
 </body>
+<div class="disclaimer">⚠️ This assessment is AI-generated from interview responses and available research. Review and verify all content before publishing, sharing, or acting on it.</div>
 </html>`;
 }
 
@@ -1196,6 +1330,7 @@ export async function generatePresentation({ sessionId = null, specPath = null, 
   let specMarkdown = '';
   let slug = 'presentation';
   let companyName = '';
+  let track = 'company'; // default; updated from state or spec content
 
   if (specPath) {
     specMarkdown = readFileSync(specPath, 'utf8');
@@ -1205,6 +1340,7 @@ export async function generatePresentation({ sessionId = null, specPath = null, 
     const state = loadSession(sessionId);
     if (!state) throw new Error(`Session not found: ${sessionId}`);
     slug = state.slug || 'presentation';
+    track = state.track || 'project';
     // Try to read the spec file
     try {
       const { specPath: autoPath } = await import('./output.js');
@@ -1223,6 +1359,7 @@ export async function generatePresentation({ sessionId = null, specPath = null, 
     const state = loadLatestSession();
     if (!state) throw new Error('No session found. Run "deep-interview init" first.');
     slug = state.slug;
+    track = state.track || 'project';
     try {
       const { specPath: autoPath } = await import('./output.js');
       specMarkdown = readFileSync(autoPath(outputDir, state.slug), 'utf8');
@@ -1236,7 +1373,18 @@ export async function generatePresentation({ sessionId = null, specPath = null, 
   }
 
   const sections = parseSpec(specMarkdown);
-  const html = generateHTML({ companyName, specMarkdown, sections, slug });
+
+  // Determine track from state or spec content
+  let presentationTrack = track;
+  if (!presentationTrack && specMarkdown) {
+    if (specMarkdown.startsWith('# Project Charter:')) {
+      presentationTrack = 'project';
+    } else if (specMarkdown.startsWith('# AI Adoption Readiness:')) {
+      presentationTrack = 'company';
+    }
+  }
+
+  const html = generateHTML({ companyName, specMarkdown, sections, slug, track: presentationTrack });
 
   const { writeFileSync, mkdirSync } = await import('fs');
   const path = await import('path');

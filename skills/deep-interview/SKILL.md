@@ -1,6 +1,6 @@
 ---
-name: deep-interview
-description: Dual-track Socratic deep-interview for AI adoption — company-level (strategic) and project-level (tactical) assessment with mathematical ambiguity gating
+name: agentdash/deep-interview
+description: AgentDash Deep Interview [BETA] — dual-track Socratic deep-interview for AI adoption readiness assessment
 level: 3
 ---
 

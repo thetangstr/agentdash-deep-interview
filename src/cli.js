@@ -8,6 +8,26 @@
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 
+// ANSI styling constants
+const RESET = '\x1b[0m';
+const BOLD = '\x1b[1m';
+const DIM = '\x1b[2m';
+const CYAN = '\x1b[36m';
+const GREEN = '\x1b[32m';
+const MAGENTA = '\x1b[35m';
+
+// Logo — AgentDash stylized wordmark
+// Renders as a bordered header with the brand name and descriptor
+const LOGO = [
+  `${CYAN}╔══════════════════════════════════════════════════╗${RESET}`,
+  `${CYAN}║${RESET}  ${CYAN}${BOLD}A G E N T D A S H${RESET}  ${CYAN}║${RESET}`,
+  `${CYAN}║${RESET}  ${MAGENTA}[ BETA ]${RESET}  ·  ${DIM}Socratic deep interview${RESET}  ${CYAN}║${RESET}`,
+  `${CYAN}╚══════════════════════════════════════════════════╝${RESET}`,
+].join('\n');
+
+// Tagline is embedded in the logo; kept for any standalone use
+const TAGLINE = ``;
+
 // We use native minimist-style parsing to avoid adding a dependency
 function parseArgs(argv) {
   const args = {};
@@ -44,7 +64,7 @@ function parseArgs(argv) {
  */
 function usage() {
   console.log(`\
-deep-interview — Socratic deep interview CLI (company-level + project-level)
+${LOGO}
 
 USAGE
   deep-interview <command> [options]
@@ -160,6 +180,8 @@ async function cmdInit(args) {
   });
 
   console.log(`\
+${LOGO}
+
 Session initialised:
   ID:      ${state.sessionId}
   slug:    ${state.slug}
@@ -445,6 +467,7 @@ async function cmdCrystallize(args) {
     }
   }
 
+  console.log(`${LOGO}\n`);
   console.log('Crystallising spec...');
   const spec = await crystallise(state, researchContext);
 
@@ -460,6 +483,9 @@ Spec crystallised and written to:
   ${filePath}
   ambiguity: ${state.ambiguity.toFixed(3)} → ${verdict}
   exit reason: ${reason}
+
+⚠️  This assessment is AI-generated from interview responses and available research.
+   Review and verify all content before publishing, sharing, or acting on it.
 `);
 }
 
@@ -473,13 +499,18 @@ async function cmdPresent(args) {
   const specPath = args['spec-path'] || null;
   const outputDir = args['output-dir'] || './specs';
 
+  console.log(`${LOGO}\n`);
   console.log('Generating presentation...');
   try {
     const outputFile = await generatePresentation({ sessionId, specPath, outputDir });
     console.log(`Presentation written to:
   ${outputFile}
 
-Open in any browser. Use arrow keys or click to navigate.`);
+Open in any browser. Use arrow keys or click to navigate.
+
+⚠️  This assessment is AI-generated from interview responses and available research.
+   Review and verify all content before publishing, sharing, or acting on it.
+`);
   } catch (err) {
     console.error(`Error: ${err.message}`);
     process.exit(1);

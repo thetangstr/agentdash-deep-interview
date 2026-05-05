@@ -1,6 +1,13 @@
 ## STEP 1: What You Get
 
-Display this block verbatim, then ask the confirmation question:
+Display this block verbatim (including the logo), then ask the confirmation question:
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+╔══════════════════════════════════════════════════╗
+║  A G E N T D A S H  [ BETA ]                    ║
+║  Socratic deep interview — company + project      ║
+╚══════════════════════════════════════════════════╝
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 BEFORE WE START

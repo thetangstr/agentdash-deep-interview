@@ -1,6 +1,6 @@
-# @agentdash/deep-interview
+# AgentDash Deep Interview [BETA]
 
-Dual-track Socratic deep-interview — company-level (strategic) and project-level (tactical) assessment with mathematical ambiguity gating. Blends AgentDash consulting context, gstack methodology, and Seven-Layer Stack architecture.
+Dual-track Socratic deep-interview — company-level (strategic) and project-level (tactical) assessment with mathematical ambiguity gating. Blends AgentDash consulting context, gstack methodology, and Agent Factory Layers architecture.
 
 ## Two tracks
 

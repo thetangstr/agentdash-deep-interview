@@ -28,7 +28,7 @@ produce a CRYSTALLISED PROJECT CHARTER from a Socratic interview transcript.
 
 IMPORTANT: If a "RESEARCH CONTEXT" section appears in the user prompt (from last30days), you MUST
 incorporate that research into the spec — especially into the Problem Statement, Risk & Governance,
-and Peer Benchmarks sections. Ground every claim in evidence from the research where available.`;
+and Peer Benchmarks sections. Ground every claim in evidence from the research where available.
 
 FORMAT REQUIREMENTS:
 Write the spec in clean Markdown. Do NOT use markdown code fences — write directly to the document.
@@ -77,7 +77,7 @@ SPEC STRUCTURE:
 ## Success Metrics
 | Metric | Current Baseline | Pilot Target | Production Target |
 |--------|-----------------|-------------|-----------------|
-| [name] | [value]         | [value]     | [value]         |
+| [name] | [value]         | [value]     | [value]        |
 
 ## Risk & Governance
 [Error tolerance, escalation path, audit trail, regulatory. What happens when the agent is wrong?]
@@ -120,7 +120,7 @@ IMPORTANT: If a "RESEARCH CONTEXT" section appears in the user prompt (from last
 incorporate that research into the spec — especially into the Executive Summary, Competitive Landscape,
 Peer Case Studies, and Risk Register sections. Ground every recommendation in evidence from the
 research where available. If the research contradicts an assumption from the interview, note the
-discrepancy explicitly.`;
+discrepancy explicitly.
 
 FORMAT REQUIREMENTS:
 Write in clean Markdown. Do NOT use markdown code fences — write directly to the document.
@@ -310,6 +310,7 @@ function buildSpecUserPrompt(state, researchContext) {
  */
 function fillSpecTemplate(spec, state) {
   const verdict = getVerdict(state.dimensions, state.threshold ?? 0.2, state.track ?? 'project');
+  const DISCLAIMER = '\n\n---\n\n> **Disclaimer:** This assessment is AI-generated from user-provided interview responses and available research context. It may contain incomplete assumptions, interpretation errors, or outdated information. Review and verify all content before publishing, sharing, or making business decisions from it.\n';
   return spec
     .replace(/\{slug\}/g, state.slug || 'untitled')
     .replace(/\{date\}/g, new Date().toISOString().split('T')[0])
@@ -317,7 +318,8 @@ function fillSpecTemplate(spec, state) {
     .replace(/\{rounds\}/g, String(state.round || 0))
     .replace(/\{ambiguity\}/g, (state.ambiguity ?? 1).toFixed(3))
     .replace(/\{verdict\}/g, verdict)
-    .replace(/\{depth\}/g, state.depth || 'standard');
+    .replace(/\{depth\}/g, state.depth || 'standard') +
+    DISCLAIMER;
 }
 
 /**
