@@ -80,12 +80,9 @@ If `{{ARGUMENTS}}` includes a seed, use it. Otherwise ask:
 AskUserQuestion
   question: "**[Company-level]** What's the company, who are we assessing, and what is the primary AI adoption question?\n\n**[Project-level]** Describe the project or idea you want to assess. One or two sentences is fine — we are here to sharpen it."
   header: "Seed"
-  options:
-    - label: "I don't know / need help articulating"
-      description: "We'll explore it together in the interview"
   multiSelect: false
 
-Record the free-text description as `seed`. If "I don't know" is selected, use the placeholder "AI adoption assessment".
+Record the free-text description as `seed`. If the answer is empty, use the placeholder "AI adoption assessment".
 
 ### Step 2b: Collect depth
 
@@ -107,31 +104,25 @@ Record the selected depth label (quick | standard | deep). Default to "standard"
 
 ### Step 3: Round 0 — Collect company/project context
 
-Before running `deep-interview init`, collect basic intake information in Round 0.
+Before running `deep-interview init`, collect basic intake information in Round 0. Ask free-text — no options.
 
 **Company-level — ask for company name and website:**
 
 AskUserQuestion
   question: "**[Company-level]** What is the company's name and website?\n\nPlease provide the company name and URL (e.g. \"Acme Corp — acme.com\")."
   header: "Round 0 — Company"
-  options:
-    - label: "Not available"
-      description: "I don't have this information right now"
   multiSelect: false
 
-Record the free-text answer as `company_name` and `company_website`. If "Not available" is selected, use placeholders ("Acme Corp" / "acme.com").
+Record the free-text answer as `company_name` and `company_website`. If empty, use placeholders ("Acme Corp" / "acme.com").
 
 **Project-level — ask for project context:**
 
 AskUserQuestion
   question: "**[Project-level]** What is the project name, the company or team running it, and the primary goal in one sentence?\n\nExample: \"Customer support AI agent for Acme Corp — automatically triage and respond to support tickets.\""
   header: "Round 0 — Project"
-  options:
-    - label: "Not available"
-      description: "I don't have this information right now"
   multiSelect: false
 
-Record the answer as `project_context`. If "Not available" is selected, use a placeholder.
+Record the answer as `project_context`. If empty, use a placeholder.
 
 ### Step 4: Initialise state via CLI
 
