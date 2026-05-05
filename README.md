@@ -20,6 +20,20 @@ pnpm link --global
 
 **Requirements:** Node.js >= 20, `ANTHROPIC_API_KEY` in environment.
 
+## Required skill: last30days
+
+The deep-interview skill uses `last30days` for competitive research before crystallisation. Install it once:
+
+```bash
+# It lives at ~/.claude/skills/last30days/ — verify it exists:
+ls ~/.claude/skills/last30days/
+
+# If not installed, clone it:
+git clone https://github.com/mvanhorn/last30days-skill.git ~/.claude/skills/last30days
+```
+
+Then inside Claude Code: `last30days AI agent adoption FinTech 2026`
+
 ## Quick start
 
 ```bash
@@ -164,6 +178,8 @@ clients/
 
 ## Using with Claude Code
 
+**Prerequisite:** Install `last30days` (see above) before running company-level assessments.
+
 Add to your `~/.claude/CLAUDE.md`:
 
 ```
@@ -183,6 +199,8 @@ Or use the skill directly:
 ```
 Use the deep-interview skill to clarify my project: an AI agent that handles...
 ```
+
+The skill runs the full interview loop: init → ask → score → (research via last30days) → crystal → present.
 
 ## Key design decisions
 
