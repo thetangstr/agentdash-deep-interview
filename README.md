@@ -36,11 +36,11 @@ deep-interview crystal --output-dir ./specs
 
 ## Interview depth
 
-| Depth | Max rounds | Use case |
+| Depth | Max rounds | Exit condition |
 |---|---|---|
-| `quick` | 5 | Small projects, early-stage ideas |
-| `standard` | 20 | Most agentic workflow projects |
-| `deep` | 40 | Complex, multi-system, high-stakes |
+| `quick` | 5 (warn at 5) | Exits early — for early-stage ideas. Lightning ~10 min. |
+| `standard` | 20 (warn at 10) | Balanced thoroughness. Standard ~30 min. |
+| `deep` | 40 | Maximum depth. ~60-90 min for complex, high-stakes. |
 
 ## Assessment dimensions
 
