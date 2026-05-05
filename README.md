@@ -1,14 +1,15 @@
 # @agentdash/deep-interview
 
-Socratic deep-interview skill with full AgentDash consulting context — for agentic workflow requirements crystallisation. Includes the interview engine (CLI + API), consultant knowledge base, and report templates.
+Dual-track Socratic deep-interview — company-level (strategic) and project-level (tactical) assessment with mathematical ambiguity gating. Blends AgentDash consulting context, gstack methodology, and Seven-Layer Stack architecture.
 
-## What it does
+## Two tracks
 
-`@agentdash/deep-interview` runs an adaptive Socratic interview to clarify requirements for an AI agent workflow project before any execution begins. It uses five weighted assessment dimensions and a mathematical ambiguity gate to determine when the spec is ready.
+| Track | Use when | Output |
+|---|---|---|
+| `--track company` | CTO / leadership AI adoption readiness | Portfolio scan, tier recommendation, strategic roadmap |
+| `--track project` | Specific agentic workflow requirements | Project charter with pilot scope, RACI, success metrics |
 
 ## Installation
-
-### From git (recommended)
 
 ```bash
 git clone https://github.com/thetangstr/agentdash-deep-interview.git
@@ -17,30 +18,19 @@ pnpm install
 pnpm link --global
 ```
 
-### Requirements
-
-- Node.js >= 20
-- `ANTHROPIC_API_KEY` (or `CLAUDE_API_KEY`) set in your environment
-
-```bash
-export ANTHROPIC_API_KEY=sk-ant-...
-```
+**Requirements:** Node.js >= 20, `ANTHROPIC_API_KEY` in environment.
 
 ## Quick start
 
 ```bash
-# 1. Initialise a session
-deep-interview init --seed "customer support agent for Acme Corp"
+# Company-level (strategic)
+deep-interview init --seed "Acme Corp AI adoption readiness" --track company --depth deep
 
-# 2. Ask a question (generates via Claude API)
+# Project-level (tactical)
+deep-interview init --seed "customer support AI agent for Acme Corp" --track project
+
 deep-interview ask --round 1
-
-# 3. Answer it — then score
 deep-interview score --round 1
-
-# 4. Repeat until ambiguity ≤ 0.2
-
-# 5. Crystallise the spec
 deep-interview crystal --output-dir ./specs
 ```
 
@@ -52,7 +42,9 @@ deep-interview crystal --output-dir ./specs
 | `standard` | 20 | Most agentic workflow projects |
 | `deep` | 40 | Complex, multi-system, high-stakes |
 
-## Five assessment dimensions
+## Assessment dimensions
+
+**Project-level (tactical):**
 
 | Dimension | Weight | What it measures |
 |---|---|---|
@@ -62,9 +54,19 @@ deep-interview crystal --output-dir ./specs
 | **risk** | 15% | Error tolerance, regulatory load, approval cadence. What happens when the agent is wrong? |
 | **fit** | 10% | Timeline, budget, DRI, stakeholder buy-in |
 
+**Company-level (strategic):**
+
+| Dimension | Weight | What it measures |
+|---|---|---|
+| **strategy** | 30% | Is the AI adoption strategy concrete? Named priorities, tier targets, org structure? |
+| **readiness** | 25% | Org maturity: AI fluency, data quality, integration complexity, executive sponsorship |
+| **portfolio** | 20% | Has the company named specific agent projects? Prioritized? Sized? |
+| **risk** | 15% | Error tolerance, regulatory load, change management, audit needs |
+| **fit** | 10% | Timeline, budget envelope, DRI, stakeholder alignment |
+
 **Ambiguity formula:**
 ```
-ambiguity = 1 - (specificity × 0.30 + systems × 0.25 + success × 0.20 + risk × 0.15 + fit × 0.10)
+ambiguity = 1 - (dimension × weight + ...)
 ```
 
 **GO condition:** ambiguity ≤ 0.2 AND all dimensions ≥ 0.5
@@ -81,7 +83,7 @@ ambiguity = 1 - (specificity × 0.30 + systems × 0.25 + success × 0.20 + risk 
 ## CLI commands
 
 ```
-deep-interview init --seed "..." [--depth quick|standard|deep]
+deep-interview init --seed "..." [--depth quick|standard|deep] [--track company|project]
 deep-interview ask --round N [--session-id <uuid>]
 deep-interview score --round N [--threshold 0.2]
 deep-interview status [session-id]
