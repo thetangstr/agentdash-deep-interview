@@ -1,10 +1,9 @@
 /**
  * score.js — Ambiguity scoring via direct Claude API calls.
  *
- * Calls the Anthropic API (claude-opus-4-7 or claude-sonnet-4-6 fallback)
- * with a structured scoring prompt to rate each dimension
- * (specificity, systems, success, risk, fit) on a 0–1 scale,
- * then computes the composite ambiguity score.
+ * Supports two tracks:
+ *   - project: specificity/systems/success/risk/fit (tactical)
+ *   - company: strategy/readiness/portfolio/risk/fit (strategic)
  */
 
 import Anthropic from '@anthropic-ai/sdk';
@@ -28,15 +27,20 @@ function getClient() {
   return _client;
 }
 
-// Model preference: prefer opus, fall back to sonnet
 const SCORING_MODEL = 'claude-opus-4-7';
 const SCORING_MODEL_FALLBACK = 'claude-sonnet-4-6';
 
 /**
- * Build the system prompt for the scoring agent.
- * Uses the consultant framework from the knowledge base.
+ * Build the scoring system prompt based on track.
  */
-function scoringSystemPrompt() {
+function scoringSystemPrompt(track = 'project') {
+  if (track === 'company') {
+    return companyScoringPrompt();
+  }
+  return projectScoringPrompt();
+}
+
+function projectScoringPrompt() {
   return `You are a Senior Strategy Consultant at AgentDash Consulting — a
 forward-deployed strategy consultant specialising in agentic workflow design.
 
@@ -80,12 +84,9 @@ ambiguity = 1 - (specificity × 0.30 + systems × 0.25 + success × 0.20 + risk 
 SCORING RULES:
 - Be conservative. Ambiguity > 0.2 is not ready for execution.
 - If any dimension is below 0.5, flag it prominently.
-- Dimensions are independent — do not normalise to sum to 1.0.
 - Ground scores in specific evidence from the interview transcript.
-- The seed idea alone scores very low; answers build up the score.
 
-OUTPUT FORMAT:
-Return a JSON object with this exact shape:
+OUTPUT FORMAT — return ONLY a JSON object:
 {
   "specificity": <float 0.0–1.0>,
   "systems":     <float 0.0–1.0>,
@@ -97,33 +98,98 @@ Return a JSON object with this exact shape:
   "concerns":    ["<specific dimension or gap>", ...],
   "verdict":     "GO | CONDITIONAL | NO-GO"
 }
+
 verdict: GO if ambiguity ≤ 0.2 and all dimensions ≥ 0.5.
 verdict: CONDITIONAL if ambiguity ≤ 0.35 or one dimension 0.4–0.5.
 verdict: NO-GO otherwise.
 
-Respond ONLY with the JSON object. No markdown code fences, no extra text.`;
+Respond ONLY with the JSON object. No markdown, no extra text.`;
+}
+
+function companyScoringPrompt() {
+  return `You are a Senior Strategy Consultant at AgentDash Consulting — a
+forward-deployed strategy consultant specialising in AI adoption readiness assessments.
+
+SCORING CONTEXT:
+You receive a transcript of a company-level strategic assessment interview with a CTO or
+leadership team. Your job is to score five dimensions of the interview on a 0.0–1.0 scale.
+
+FIVE DIMENSIONS AND THEIR MEANING:
+
+1. STRATEGY (weight 30%)
+   - Is the AI adoption strategy concrete? Named priorities, tier targets, org structure?
+   - Score 1.0 = named tier targets, specific priorities, DRI ownership, governance structure
+   - Score 0.0 = vague "we want to do AI", no named priorities, no org structure
+
+2. READINESS (weight 25%)
+   - Org maturity: AI fluency, data quality, integration complexity, executive sponsorship?
+   - Score 1.0 = named data quality level, known AI fluency gaps, integration complexity assessed
+   - Score 0.0 = no assessment of current state, "we'll figure it out" language
+
+3. PORTFOLIO (weight 20%)
+   - Has the company named specific agent projects? Prioritized? Sized?
+   - Score 1.0 = named projects with sizing, prioritisation, pilot scope defined
+   - Score 0.0 = "we want to adopt AI broadly", no specific projects named
+
+4. RISK (weight 15%)
+   - Error tolerance, regulatory load, change management, audit requirements.
+   - What happens when an AI initiative fails or produces wrong output?
+   - Score 1.0 = change management plan, named regulatory concerns, error handling defined
+   - Score 0.0 = no risk discussion, assume smooth adoption
+
+5. FIT (weight 10%)
+   - Timeline, budget envelope, DRI, stakeholder alignment.
+   - Score 1.0 = named budget range, timeline constraint, DRI, executive sponsor
+   - Score 0.0 = no timeline, no budget, no owner, exploratory only
+
+AMBIGUITY FORMULA:
+ambiguity = 1 - (strategy × 0.30 + readiness × 0.25 + portfolio × 0.20 + risk × 0.15 + fit × 0.10)
+
+SCORING RULES:
+- Be conservative. Ambiguity > 0.2 means the company is not ready for execution.
+- If any dimension is below 0.5, flag it prominently.
+- Ground scores in specific evidence from the interview transcript.
+
+OUTPUT FORMAT — return ONLY a JSON object:
+{
+  "strategy":  <float 0.0–1.0>,
+  "readiness": <float 0.0–1.0>,
+  "portfolio": <float 0.0–1.0>,
+  "risk":      <float 0.0–1.0>,
+  "fit":       <float 0.0–1.0>,
+  "ambiguity": <float 0.0–1.0>,
+  "rationale": "<2-3 sentence explanation of overall score>",
+  "concerns":  ["<specific dimension or gap>", ...],
+  "verdict":   "GO | CONDITIONAL | NO-GO"
+}
+
+verdict: GO if ambiguity ≤ 0.2 and all dimensions ≥ 0.5.
+verdict: CONDITIONAL if ambiguity ≤ 0.35 or one dimension 0.4–0.5.
+verdict: NO-GO otherwise.
+
+Respond ONLY with the JSON object. No markdown, no extra text.`;
 }
 
 /**
  * Score a round's transcript using the Claude API.
  *
  * @param {object} options
- * @param {string} options.seed       - The original seed idea
- * @param {Array}  options.answers    - Array of { round, question, answer, dimension }
- * @param {object} [options.priorDimensions] - Previous round's scores (if any)
- * @param {number} [options.round]    - Current round number
+ * @param {string} options.seed
+ * @param {Array}  options.answers
+ * @param {object} [options.priorDimensions]
+ * @param {number} [options.round]
+ * @param {string} [options.track='project'] - 'company' | 'project'
  * @returns {Promise<object>} the scoring result
  */
-export async function scoreRound({ seed, answers, priorDimensions = {}, round = 0 }) {
+export async function scoreRound({ seed, answers, priorDimensions = {}, round = 0, track = 'project' }) {
   const client = getClient();
 
-  // Build the transcript string for context
   const transcriptLines = answers.map(a =>
     `Round ${a.round}: Q: ${a.question}\nA: ${a.answer}`
   );
   const transcript = transcriptLines.join('\n\n');
 
-  const systemPrompt = scoringSystemPrompt();
+  const systemPrompt = scoringSystemPrompt(track);
   const userPrompt = `SEED IDEA: ${seed}
 
 INTERVIEW TRANSCRIPT (${answers.length} round${answers.length !== 1 ? 's' : ''}):
@@ -131,9 +197,9 @@ ${transcript}
 
 ${answers.length === 0 ? 'No answers recorded yet — score based on seed idea only.' : ''}
 
-Round: ${round}`;
+Round: ${round}
+Track: ${track.toUpperCase()}`;
 
-  // Try opus first, fall back to sonnet
   let result;
   try {
     result = await client.messages.create({
@@ -157,27 +223,24 @@ Round: ${round}`;
     }
   }
 
-  const raw = result.content[0]?.text || result.content?.[0?.text] || '';
-  // Strip markdown code fences if present
+  const raw = result.content[0]?.text || '';
   const cleaned = raw.replace(/^```json\s*/i, '').replace(/\s*```$/i, '').trim();
 
   try {
     return JSON.parse(cleaned);
   } catch {
-    // Fall back to regex extraction if JSON is malformed
+    // Fall back to regex extraction
     const scores = {};
-    const dimNames = ['specificity', 'systems', 'success', 'risk', 'fit', 'ambiguity'];
+    const projectDims = ['specificity', 'systems', 'success', 'risk', 'fit', 'ambiguity'];
+    const companyDims = ['strategy', 'readiness', 'portfolio', 'risk', 'fit', 'ambiguity'];
+    const dimNames = track === 'company' ? companyDims : projectDims;
+
     for (const dim of dimNames) {
       const m = cleaned.match(new RegExp(`"${dim}"\\s*:\\s*([\\d.]+)`, 'i'));
       scores[dim] = m ? parseFloat(m[1]) : 0;
     }
     return {
       ...scores,
-      specificity: scores.specificity ?? 0,
-      systems: scores.systems ?? 0,
-      success: scores.success ?? 0,
-      risk: scores.risk ?? 0,
-      fit: scores.fit ?? 0,
       ambiguity: scores.ambiguity ?? 1.0,
       rationale: '(parse error — scores estimated from raw output)',
       concerns: [],
@@ -188,10 +251,22 @@ Round: ${round}`;
 
 /**
  * Compute the composite ambiguity score from individual dimension scores.
- * @param {{ specificity: number, systems: number, success: number, risk: number, fit: number }} dims
+ * @param {object} dims
+ * @param {string} [track='project']
  * @returns {number}
  */
-export function computeAmbiguity(dims) {
+export function computeAmbiguity(dims, track = 'project') {
+  if (track === 'company') {
+    return Math.max(0, Math.min(1,
+      1 - (
+        (dims.strategy ?? 0) * 0.30 +
+        (dims.readiness ?? 0) * 0.25 +
+        (dims.portfolio ?? 0) * 0.20 +
+        (dims.risk ?? 0) * 0.15 +
+        (dims.fit ?? 0) * 0.10
+      )
+    ));
+  }
   return Math.max(0, Math.min(1,
     1 - (
       (dims.specificity ?? 0) * 0.30 +
@@ -205,12 +280,6 @@ export function computeAmbiguity(dims) {
 
 /**
  * Determine which challenge agents should fire at a given round.
- *
- * Challenge agents:
- *   Round 4+  → Contrarian
- *   Round 6+  → Simplifier
- *   Round 8+  → Ontologist
- *
  * @param {number} round
  * @returns {string[]}
  */
@@ -226,10 +295,11 @@ export function getChallengeAgents(round) {
  * Check GO/CONDITIONAL/NO-GO verdict from dimension scores.
  * @param {object} dims
  * @param {number} threshold - ambiguity threshold (default 0.2)
+ * @param {string} [track='project']
  * @returns {'GO'|'CONDITIONAL'|'NO-GO'}
  */
-export function getVerdict(dims, threshold = 0.2) {
-  const ambiguity = computeAmbiguity(dims);
+export function getVerdict(dims, threshold = 0.2, track = 'project') {
+  const ambiguity = computeAmbiguity(dims, track);
   const allDimensionsMeetMinimum = Object.values(dims).every(v => (v ?? 0) >= 0.5);
 
   if (ambiguity <= threshold && allDimensionsMeetMinimum) return 'GO';

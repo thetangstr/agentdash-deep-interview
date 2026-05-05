@@ -44,7 +44,7 @@ function parseArgs(argv) {
  */
 function usage() {
   console.log(`\
-deep-interview — Socratic deep interview CLI
+deep-interview — Socratic deep interview CLI (company-level + project-level)
 
 USAGE
   deep-interview <command> [options]
@@ -60,43 +60,35 @@ COMMANDS
 INIT
   deep-interview init --seed "your idea here"
   deep-interview init --seed "..." --depth quick|standard|deep
-  deep-interview init --seed "..." --session-id <uuid>
+  deep-interview init --seed "..." --track company|project
+
+TRACK OPTIONS
+  --track        "company" (strategic) or "project" (tactical). Default: project
 
 SCORE
   deep-interview score --round <N> [--threshold <0.0-1.0>]
-  Reads state from ~/.agentic-readiness/state/<sessionId>.json
 
 ASK
   deep-interview ask --round <N>
-  Generates and prints the next question.
 
 STATUS
   deep-interview status [session-id]
-  Prints a summary of the current session.
 
 ONT
   deep-interview ont [session-id]
-  Extracts ontology and stability score.
 
 CRYSTAL
   deep-interview crystal [--output-dir <path>]
-  Crystallises the spec and writes it.
-
-OPTIONS
-  --seed         Initial seed / idea
-  --depth        quick (5 rounds) | standard (20) | deep (40). Default: standard
-  --session-id   Session ID (UUID). Defaults to latest session.
-  --round        Current round number
-  --threshold    Ambiguity threshold. Default: 0.2
-  --output-dir   Output directory for spec. Default: ./specs
-  --depth        Interview depth flag (conflict with same-named command — use full flag)
-  --help         Show this help
 
 EXAMPLES
-  deep-interview init --seed "customer support agent for Acme Corp"
+  # Company-level (strategic) assessment
+  deep-interview init --seed "Acme Corp AI adoption readiness" --track company --depth deep
+
+  # Project-level (tactical) project charter
+  deep-interview init --seed "customer support agent for Acme Corp" --track project
+
   deep-interview score --round 3
   deep-interview ask --round 4
-  deep-interview status
   deep-interview crystal --output-dir ./specs
 `);
 }
@@ -145,23 +137,28 @@ async function cmdInit(args) {
   }
 
   const { createSession } = await import('./state.js');
-  const { ensureDir } = await import('./output.js');
-  const path = await import('path');
   const { mkdirSync } = await import('fs');
 
-  // Ensure output dirs exist
   mkdirSync('./specs', { recursive: true });
+
+  const track = args.track || 'project';
+  if (!['company', 'project'].includes(track)) {
+    console.error('deep-interview init: --track must be "company" or "project"');
+    process.exit(1);
+  }
 
   const state = createSession({
     seed,
     sessionId: args['session-id'] || null,
     depth: args.depth || 'standard',
+    track,
   });
 
   console.log(`\
 Session initialised:
   ID:      ${state.sessionId}
   slug:    ${state.slug}
+  track:   ${state.track}
   depth:   ${state.depth} (max ${state.maxRounds} rounds)
   state:   ~/.agentic-readiness/state/${state.sessionId}.json
   spec:    ./specs/deep-interview-${state.slug}.md
@@ -175,15 +172,11 @@ async function cmdScore(args) {
   const round = parseInt(args.round || '0', 10);
   const threshold = parseFloat(args.threshold || '0.2');
 
-  const { loadSession, writeState } = await import('./state.js');
-  const { loadLatestSession } = await import('./state.js');
+  const { loadSession, loadLatestSession, updateDimensions } = await import('./state.js');
   const { scoreRound } = await import('./score.js');
-  const { updateDimensions } = await import('./state.js');
 
   const sessionId = args['session-id'] || null;
-  const state = sessionId
-    ? loadSession(sessionId)
-    : loadLatestSession();
+  const state = sessionId ? loadSession(sessionId) : loadLatestSession();
 
   if (!state) {
     console.error('No session found. Run "deep-interview init --seed ..." first.');
@@ -195,35 +188,62 @@ async function cmdScore(args) {
     answers: state.answers,
     priorDimensions: state.dimensions,
     round: state.round,
+    track: state.track || 'project',
   });
 
-  // Update state with new scores
-  updateDimensions(state, {
-    specificity: result.specificity ?? state.dimensions.specificity,
-    systems: result.systems ?? state.dimensions.systems,
-    success: result.success ?? state.dimensions.success,
-    risk: result.risk ?? state.dimensions.risk,
-    fit: result.fit ?? state.dimensions.fit,
-  });
+  // Update state with new scores — merge only the dimensions that exist for this track
+  const scoreUpdate = {};
+  if (state.track === 'company') {
+    scoreUpdate.strategy = result.strategy ?? state.dimensions.strategy;
+    scoreUpdate.readiness = result.readiness ?? state.dimensions.readiness;
+    scoreUpdate.portfolio = result.portfolio ?? state.dimensions.portfolio;
+  } else {
+    scoreUpdate.specificity = result.specificity ?? state.dimensions.specificity;
+    scoreUpdate.systems = result.systems ?? state.dimensions.systems;
+    scoreUpdate.success = result.success ?? state.dimensions.success;
+  }
+  scoreUpdate.risk = result.risk ?? state.dimensions.risk;
+  scoreUpdate.fit = result.fit ?? state.dimensions.fit;
+
+  updateDimensions(state, scoreUpdate);
+
+  const { writeState } = await import('./state.js');
   writeState(state);
 
   const verdict = result.verdict || 'NO-GO';
   const emoji = verdict === 'GO' ? '✅' : verdict === 'CONDITIONAL' ? '⚠️' : '❌';
 
-  console.log(`\
-Round ${state.round} scoring:
-  specificity: ${(result.specificity ?? 0).toFixed(2)} (weight 30%)
-  systems:      ${(result.systems ?? 0).toFixed(2)} (weight 25%)
-  success:      ${(result.success ?? 0).toFixed(2)} (weight 20%)
-  risk:         ${(result.risk ?? 0).toFixed(2)} (weight 15%)
-  fit:          ${(result.fit ?? 0).toFixed(2)} (weight 10%)
+  if (state.track === 'company') {
+    console.log(`\
+Round ${state.round} scoring [COMPANY]:
+  strategy:  ${(result.strategy ?? 0).toFixed(2)} (weight 30%)
+  readiness: ${(result.readiness ?? 0).toFixed(2)} (weight 25%)
+  portfolio: ${(result.portfolio ?? 0).toFixed(2)} (weight 20%)
+  risk:      ${(result.risk ?? 0).toFixed(2)} (weight 15%)
+  fit:       ${(result.fit ?? 0).toFixed(2)} (weight 10%)
   ─────────────────────────────────
-  ambiguity:    ${(result.ambiguity ?? 1).toFixed(3)}
-  threshold:    ${threshold.toFixed(3)}
-  verdict:      ${emoji} ${verdict}
+  ambiguity: ${(result.ambiguity ?? 1).toFixed(3)}
+  threshold: ${threshold.toFixed(3)}
+  verdict:   ${emoji} ${verdict}
   ${result.rationale ? 'rationale: ' + result.rationale : ''}
   ${result.concerns?.length ? 'concerns: ' + result.concerns.join('; ') : ''}
 `);
+  } else {
+    console.log(`\
+Round ${state.round} scoring [PROJECT]:
+  specificity: ${(result.specificity ?? 0).toFixed(2)} (weight 30%)
+  systems:     ${(result.systems ?? 0).toFixed(2)} (weight 25%)
+  success:     ${(result.success ?? 0).toFixed(2)} (weight 20%)
+  risk:        ${(result.risk ?? 0).toFixed(2)} (weight 15%)
+  fit:         ${(result.fit ?? 0).toFixed(2)} (weight 10%)
+  ─────────────────────────────────
+  ambiguity:   ${(result.ambiguity ?? 1).toFixed(3)}
+  threshold:   ${threshold.toFixed(3)}
+  verdict:     ${emoji} ${verdict}
+  ${result.rationale ? 'rationale: ' + result.rationale : ''}
+  ${result.concerns?.length ? 'concerns: ' + result.concerns.join('; ') : ''}
+`);
+  }
 }
 
 /**
@@ -256,11 +276,13 @@ async function cmdAsk(args) {
     answers: state.answers,
     dimensions: state.dimensions,
     challengeAgents,
+    track: state.track || 'project',
   });
 
   console.log(JSON.stringify({
     sessionId: state.sessionId,
     round,
+    track: state.track,
     dimension: q.dimension,
     phase: q.phase,
     question: q.question,
@@ -289,21 +311,25 @@ async function cmdStatus(args) {
   const verdict = state.ambiguity <= 0.2 ? 'GO' : state.ambiguity <= 0.35 ? 'CONDITIONAL' : 'NO-GO';
   const emoji = verdict === 'GO' ? '✅' : verdict === 'CONDITIONAL' ? '⚠️' : '❌';
 
-  console.log(`\
+  const bar = (v) => '█'.repeat(Math.round((v ?? 0) * 10)) + '░'.repeat(10 - Math.round((v ?? 0) * 10));
+
+  if (state.track === 'company') {
+    console.log(`\
 deep-interview session
 ─────────────────────────────────────────────
   session:   ${state.sessionId}
   slug:      ${state.slug}
+  track:     COMPANY (strategic)
   phase:     ${state.phase}
   started:   ${state.startedAt}
   rounds:    ${state.round} / ${state.maxRounds}
   depth:     ${state.depth}
 ─────────────────────────────────────────────
-  SPECIFICITY  ${(d.specificity ?? 0).toFixed(2)} (30%)  ${'█'.repeat(Math.round((d.specificity ?? 0) * 10))}${'░'.repeat(10 - Math.round((d.specificity ?? 0) * 10))}
-  SYSTEMS      ${(d.systems ?? 0).toFixed(2)} (25%)  ${'█'.repeat(Math.round((d.systems ?? 0) * 10))}${'░'.repeat(10 - Math.round((d.systems ?? 0) * 10))}
-  SUCCESS      ${(d.success ?? 0).toFixed(2)} (20%)  ${'█'.repeat(Math.round((d.success ?? 0) * 10))}${'░'.repeat(10 - Math.round((d.success ?? 0) * 10))}
-  RISK         ${(d.risk ?? 0).toFixed(2)} (15%)  ${'█'.repeat(Math.round((d.risk ?? 0) * 10))}${'░'.repeat(10 - Math.round((d.risk ?? 0) * 10))}
-  FIT          ${(d.fit ?? 0).toFixed(2)} (10%)  ${'█'.repeat(Math.round((d.fit ?? 0) * 10))}${'░'.repeat(10 - Math.round((d.fit ?? 0) * 10))}
+  STRATEGY   ${(d.strategy ?? 0).toFixed(2)} (30%)  ${bar(d.strategy)}
+  READINESS  ${(d.readiness ?? 0).toFixed(2)} (25%)  ${bar(d.readiness)}
+  PORTFOLIO  ${(d.portfolio ?? 0).toFixed(2)} (20%)  ${bar(d.portfolio)}
+  RISK       ${(d.risk ?? 0).toFixed(2)} (15%)  ${bar(d.risk)}
+  FIT        ${(d.fit ?? 0).toFixed(2)} (10%)  ${bar(d.fit)}
 ─────────────────────────────────────────────
   ambiguity:  ${(state.ambiguity ?? 1).toFixed(3)} / 0.200  ${emoji} ${verdict}
   exit:       ${state.exitReason || 'in-progress'}
@@ -311,6 +337,31 @@ deep-interview session
 ─────────────────────────────────────────────
   spec path:  ./specs/deep-interview-${state.slug}.md
 `);
+  } else {
+    console.log(`\
+deep-interview session
+─────────────────────────────────────────────
+  session:   ${state.sessionId}
+  slug:      ${state.slug}
+  track:     PROJECT (tactical)
+  phase:     ${state.phase}
+  started:   ${state.startedAt}
+  rounds:    ${state.round} / ${state.maxRounds}
+  depth:     ${state.depth}
+─────────────────────────────────────────────
+  SPECIFICITY  ${(d.specificity ?? 0).toFixed(2)} (30%)  ${bar(d.specificity)}
+  SYSTEMS      ${(d.systems ?? 0).toFixed(2)} (25%)  ${bar(d.systems)}
+  SUCCESS      ${(d.success ?? 0).toFixed(2)} (20%)  ${bar(d.success)}
+  RISK         ${(d.risk ?? 0).toFixed(2)} (15%)  ${bar(d.risk)}
+  FIT          ${(d.fit ?? 0).toFixed(2)} (10%)  ${bar(d.fit)}
+─────────────────────────────────────────────
+  ambiguity:  ${(state.ambiguity ?? 1).toFixed(3)} / 0.200  ${emoji} ${verdict}
+  exit:       ${state.exitReason || 'in-progress'}
+  ${state.finishedAt ? `finished:  ${state.finishedAt}` : ''}
+─────────────────────────────────────────────
+  spec path:  ./specs/deep-interview-${state.slug}.md
+`);
+  }
 }
 
 /**

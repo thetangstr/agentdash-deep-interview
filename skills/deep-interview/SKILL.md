@@ -1,37 +1,44 @@
 ---
 name: deep-interview
-description: Socratic deep-interview with mathematical ambiguity gating for agentic workflow requirements crystallisation
+description: Dual-track Socratic deep-interview for AI adoption — company-level (strategic) and project-level (tactical) assessment with mathematical ambiguity gating
 level: 3
 ---
 
 <Purpose>
-Run a Socratic deep-interview to clarify and crystallise requirements for an agentic workflow project before any execution begins. The interview uses five assessment dimensions (specificity 30%, systems 25%, success 20%, risk 15%, fit 10%) and a mathematical ambiguity gate (threshold 0.2) to determine when the spec is ready for execution. Output is a crystallised markdown spec.
+Run a Socratic deep-interview to assess AI adoption readiness. Supports two tracks:
+- **Company-level (strategic):** Assess a CTO's or leadership team's AI adoption maturity, portfolio readiness, and operating model — delivered as a portfolio scan with tier recommendation
+- **Project-level (tactical):** Crystallise requirements for a specific agentic workflow project before execution — delivered as a project charter with pilot scope
+
+The interview uses weighted assessment dimensions and a mathematical ambiguity gate (threshold 0.2) to determine when assessment is complete. Output feeds into a 3-stage pipeline: **deep-interview → ralplan (consensus refinement) → autopilot (execution)**
 </Purpose>
 
 <Use_When>
-- User says "deep-interview", "/deep-interview", "requirements interview", "clarify this project", "help me spec this"
-- User has a new project or idea that is vague or ill-defined and wants structured Socratic questioning to crystallise it
-- User has been talking about an agentic workflow but the requirements keep shifting
-- This skill is the correct tool when the user needs REQUIREMENTS CLARITY, not execution
+- User says "deep-interview", "/deep-interview", "assess my company", "assess this project", "AI readiness", "help me understand our AI maturity"
+- User is a CTO or leadership team member wanting to understand their AI adoption readiness
+- User has a vague project idea for an AI agent and wants structured requirements gathering
+- User says "garry tan", "advisor", "interview founders", "CTO assessment"
 </Use_When>
 
 <Do_Not_Use_When>
-- User already has a detailed PRD or spec file — use a planning or execution skill directly
-- User wants competitive intelligence or market research — use a research skill
-- User wants to execute something — this skill only does requirements crystallisation
+- User already has a detailed PRD, assessment report, or plan file — use a planning skill directly
+- User wants competitive intelligence or market research — use AgentDash Research (washington-smoky.vercel.app) first
+- User wants to execute something — this skill only does assessment/requirements crystallisation
 - User is asking a single one-off question — answer it directly without invoking this skill
 </Do_Not_Use_When>
 
 <Why_This_Exists>
-Most agentic workflow failures don't stem from technology — they stem from unclear requirements: nobody defined what "success" means, nobody named the systems that need to integrate, nobody established error tolerance or escalation paths. This skill applies a Socratic interview methodology with mathematical clarity gates (ambiguity score ≤ 0.2) before any execution begins.
+Most AI adoption failures don't stem from technology — they stem from unclear strategy: nobody defined what "AI maturity" means for their org, nobody named which workflows are actually viable for agents, nobody established pilot criteria or rollback triggers. This skill applies Socratic methodology (refined through gstack's office-hours discipline: 6 forcing questions, CEO review modes) with mathematical clarity gates before any execution begins.
+
+Company-level assessments surface the gap between ambition and operational readiness. Project-level assessments prevent building the wrong agent for the wrong workflow.
 </Why_This_Exists>
 
 <Execution_Policy>
-- Phase 1: Initialise the interview session using the `deep-interview` CLI (`deep-interview init --seed "..." --depth standard`)
-- Phase 2: Loop — generate question, ask via AskUserQuestion, record answer, score via CLI
-- Phase 3: After each round, check ambiguity score and dimension scores
-- Phase 4: Exit when ambiguity ≤ 0.2 AND all dimensions ≥ 0.5 (GO verdict), or round cap reached
-- Phase 5: Crystallise spec via `deep-interview crystal`
+- Phase 1: Detect track (company vs project) from `{{ARGUMENTS}}` or ask upfront
+- Phase 2: Initialise session via `deep-interview init --seed "..." --depth [depth] --track [company|project]`
+- Phase 3: Loop — generate question, ask via AskUserQuestion, record answer, score via CLI
+- Phase 4: After each round, check ambiguity score and dimension scores
+- Phase 5: Exit when ambiguity ≤ 0.2 AND all dimensions ≥ 0.5 (GO verdict), or round cap reached
+- Phase 6: Crystallise assessment via `deep-interview crystal`
 - The interview loop is INTERACTIVE — use AskUserQuestion for every user-facing question
 - The CLI is the STATE MACHINE — do not manage state manually; always read/write via the CLI
 - Do NOT use `Skill()` invocations — this is a standalone skill with no sub-skills
@@ -39,57 +46,71 @@ Most agentic workflow failures don't stem from technology — they stem from unc
 
 <Steps>
 
-## Phase 1: Initialise — Intake
+## Phase 1: Track Detection + Intake
 
-### Step 1: Collect seed and depth upfront
+### Step 1: Detect or ask the assessment track
 
-The skill is invoked with a seed string. Extract it from `{{ARGUMENTS}}`. If no arguments are provided, ask both questions at once:
+Extract from `{{ARGUMENTS}}` if the user specified it. Look for keywords:
+
+- **Company-level** signals: "company", "CTO", "enterprise", "org", "team", "adoption", "strategy", "maturity", "portfolio", "Diana Hu"
+- **Project-level** signals: "project", "build", "agent", "workflow", "automate", "implement", "tool"
+
+If ambiguous or not specified, ask:
 
 **Self-check before asking:**
-- [ ] Question covers both the project idea AND interview depth
-- [ ] Depth options have clear time/effort descriptions
+- [ ] Both options clearly described with time/effort
 - [ ] multiSelect: false
 
 AskUserQuestion
-  question: "Two things before we start:\n\n1. **Your project or idea** — What do you want to clarify? Describe it in a sentence or two. A rough idea is fine; we are here to sharpen it.\n\n2. **Interview depth** — How thorough should we be?"
-  header: "Your Idea + Interview Depth"
+  question: "What kind of assessment are we doing?\n\n**Company-level (strategic):** For CTOs and leadership teams. Assess AI adoption maturity, operating model readiness, and portfolio of potential agent projects. Output: a portfolio scan with tier recommendation and strategic roadmap. ~45 min.\n\n**Project-level (tactical):** For specific agentic workflow ideas. Clarify requirements for one named project before execution. Output: a project charter with pilot scope and success metrics. ~30 min."
+  header: "Assessment Track"
   options:
-    - label: "Quick (5 rounds)"
-      description: "Fast clarity for small projects or early-stage ideas. 15–20 min."
-    - label: "Standard (20 rounds, default)"
-      description: "Full Socratic interview. Thorough enough for most agentic workflows. 30–45 min."
-    - label: "Deep (40 rounds)"
-      description: "Maximum thoroughness for complex, multi-system, or high-stakes projects. 60–90 min."
+    - label: "Company-level (strategic)"
+      description: "AI adoption maturity, operating model, portfolio scan. For CTOs and leadership."
+    - label: "Project-level (tactical)"
+      description: "Specific agent project requirements. For teams building their first or next agent."
   multiSelect: false
 
-Record the free-text answer as `seed`. Record the selected option label, stripped of the round count prefix, as `depth` (quick | standard | deep). Default to "standard" if no selection.
+Record the selected track as `assessment_track`.
 
-**Parse depth from seed argument:** If `{{ARGUMENTS}}` includes `--quick`, `--standard`, or `--deep`, use that as the depth and skip the depth question. If `--output-dir <path>` is present, record it.
+### Step 2: Collect seed and depth
 
-### Step 2: Initialise state via CLI
+If `{{ARGUMENTS}}` includes a seed, use it. Otherwise ask:
+
+AskUserQuestion
+  question: "**[Company-level]** What's the company, who are we assessing, and what is the primary AI adoption question?\n\n**[Project-level]** Describe the project or idea you want to assess. One or two sentences is fine — we are here to sharpen it.\n\nAlso — how thorough should we be?"
+  header: "Seed + Depth"
+  options:
+    - label: "Quick (5 rounds)"
+      description: "Fast clarity for early-stage ideas. 15–20 min."
+    - label: "Standard (20 rounds, default)"
+      description: "Full Socratic interview. Thorough enough for most assessments. 30–45 min."
+    - label: "Deep (40 rounds)"
+      description: "Maximum thoroughness for complex, multi-system, or high-stakes assessments. 60–90 min."
+  multiSelect: false
+
+Record the free-text description as `seed`. Record the selected depth label (quick | standard | deep). Default to "standard".
+
+### Step 3: Initialise state via CLI
 
 Run via Bash:
 ```
-deep-interview init --seed "[seed]" --depth [depth] 2>&1
+deep-interview init --seed "[seed]" --depth [depth] --track [assessment_track] 2>&1
 ```
 
-If `deep-interview` is not found, show installation instructions first:
+If `deep-interview` is not found, display installation instructions:
 
-Display:
+```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 deep-interview CLI NOT FOUND
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-The `@agentdash/deep-interview` CLI is not installed. Install it with:
+Install from git:
 
-```bash
-npm install -g @agentdash/deep-interview
-```
-
-Or if you are in the agentdash-deep-interview package directory:
-
-```bash
-npm link
+git clone https://github.com/thetangstr/agentdash-deep-interview.git
+cd agentdash-deep-interview
+pnpm install
+pnpm link --global
 ```
 
 AskUserQuestion
@@ -97,51 +118,101 @@ AskUserQuestion
   header: "CLI Install"
   options:
     - label: "Yes — continue"
-      description: "Re-run the init command."
     - label: "No — show me how"
-      description: "Display installation instructions."
     - label: "Exit"
-      description: "Exit the skill."
   multiSelect: false
 
-If user wants install instructions:
-  Display the install commands above, then re-ask this question.
-
-If CLI is ready, run init.
-
-### Step 3: Parse init output
-
-The init command prints the session ID. Extract it and record as `sessionId`.
+If CLI is ready, run init. Parse the session ID.
 
 Display:
+```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 INTERVIEW INITIALISED
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+  track:     [company | project]
   seed:      [first 80 chars of seed]...
   depth:     [depth] ([maxRounds] rounds max)
   session:   [sessionId]
   state:     ~/.agentic-readiness/state/[sessionId].json
-  spec out:  [output-dir]/deep-interview-[slug].md
+  spec out:  ./specs/deep-interview-[slug].md
 
 Proceed to Phase 2.
+```
 
 ---
 
 ## Phase 2: Interview Loop
 
-**Prerequisite:** Phase 1 must be complete with sessionId confirmed.
+**Prerequisite:** Phase 1 complete with sessionId confirmed.
 
-This is the main interview loop. Repeat rounds until:
-- ambiguity ≤ 0.2 AND all dimensions ≥ 0.5 (GO verdict)
-- OR round cap reached (depth-based)
-- OR user requests early exit
+Two distinct question tracks — the CLI generates questions appropriate to the track. Both tracks share the same round loop, ambiguity scoring, and challenge agents.
 
-### Round setup
+### Track A: Company-Level (Strategic)
+
+**Persona:** Garry Tan-style advisor — direct, pattern-matches across 25+ agent-factory deployments, pushes back on framing, surfaces what's actually blocking the org.
+
+**Six Forcing Questions (gstack office-hours discipline, adapted for AI adoption):**
+
+Before each round, the question generator applies these lenses to the weakest dimension:
+
+1. **Premise challenge:** "Is the framing correct, or is the CTO describing a symptom not the problem?"
+2. **Constraint pressure:** "Are the stated constraints real, or are they habits masquerading as requirements?"
+3. **Simplification probe:** "What's the minimum viable version of this adoption?"
+4. **Peer pattern match:** "What have similar-stage companies in their sector actually tried? What blocked them?"
+5. **Reversal test:** "What if the opposite approach were correct?"
+6. **Ownership stress:** "Who owns the outcome? If the agent fails, whose fault is it?"
+
+**Company-Level Dimensions:**
+
+| Dimension | Weight | What it measures |
+|---|---|---|
+| **strategy** | 30% | Is the AI adoption strategy concrete? Named priorities, tier targets, org structure? |
+| **readiness** | 25% | Org maturity: AI fluency, data quality, integration complexity, executive sponsorship |
+| **portfolio** | 20% | Has the company named specific agent projects? Prioritized? Sized? |
+| **risk** | 15% | Error tolerance, regulatory load, change management, audit requirements |
+| **fit** | 10% | Timeline, budget envelope, DRI, stakeholder alignment |
+
+**Ambiguity formula:**
+```
+ambiguity = 1 - (strategy × 0.30 + readiness × 0.25 + portfolio × 0.20 + risk × 0.15 + fit × 0.10)
+```
+
+**Diana Hu Operating Model lenses** (inject into questions at appropriate rounds):
+- "Who is the DRI for AI adoption? How is AI governance structured?"
+- "How does AI work get funded — CAPEX, OPEX, or project budgets?"
+- "What's the current AI team headcount vs. ambition?"
+- "How does the org measure AI success today?"
+
+**Layer Inflection Exposure** (from Seven-Layer Stack):
+Probe which layer the org is trying to transform and whether they're skipping layers:
+- "You've described wanting to go straight to L5 evaluation. But you haven't named your L2 connectors yet — how will the agent actually get data?"
+- "You said 'we need an agent that reads Salesforce.' Which layer is that — L2 integration or L4 domain logic?"
+
+### Track B: Project-Level (Tactical)
+
+**Persona:** Neutral requirements clarifier — systematic, exposes hidden assumptions, measures across five dimensions.
+
+**Project-Level Dimensions:**
+
+| Dimension | Weight | What it measures |
+|---|---|---|
+| **specificity** | 30% | Is the primary opportunity concrete? Named workflow, specific inputs/outputs? |
+| **systems** | 25% | Are the systems and data the agent must touch named? Integration points, data quality known? |
+| **success** | 20% | How will the customer know it worked? Named metric, baseline, target? |
+| **risk** | 15% | Error tolerance, regulatory load, approval cadence, audit needs. What happens when the agent is wrong? |
+| **fit** | 10% | Timeline, budget envelope, DRI, stakeholder buy-in. |
+
+**Ambiguity formula:**
+```
+ambiguity = 1 - (specificity × 0.30 + systems × 0.25 + success × 0.20 + risk × 0.15 + fit × 0.10)
+```
+
+### Round Loop
 
 For round = 1 to maxRounds:
 
-### Step A: Generate question
+**Step A: Generate question**
 
 Run via Bash:
 ```
@@ -151,20 +222,20 @@ deep-interview ask --round [round] --session-id [sessionId] 2>&1
 Parse the JSON output. Extract:
 - `question` — the question to ask
 - `dimension` — which dimension this probes
-- `phase` — which interview phase
+- `track` — company or project
 - `challengeAgent` — which challenge agent fired (if any)
 - `ambiguity` — current ambiguity score
 
-### Step B: Ask the question
-
-Display the round header and challenge agent note (if applicable):
+**Step B: Ask the question**
 
 Display:
+```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-ROUND [round] / [maxRounds] — [dimension] / [phase]
+ROUND [round] / [maxRounds] — [dimension] / [track]
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ${challengeAgent ? `[Challenge agent: ${challengeAgent}]` : ''}
 Current ambiguity: [ambiguity]
+```
 
 AskUserQuestion
   question: "[question]"
@@ -175,75 +246,52 @@ AskUserQuestion
     - label: "Exit interview early"
   multiSelect: false
 
-### Step C: Handle answer
+**Step C: Handle answer**
 
 **If user answers:**
-  Run via Bash to record:
+  Run via Bash:
   ```
-  deep-interview score --round [round] --session-id [sessionId] --threshold [threshold]
+  deep-interview score --round [round] --session-id [sessionId] --threshold 0.2 2>&1
   ```
-  The score command reads the latest state, scores the round, and updates the state file.
 
-  Parse the score output. Extract:
-  - `ambiguity` — updated ambiguity score
-  - `verdict` — GO | CONDITIONAL | NO-GO
-  - `rationale` — 2-3 sentence explanation
-  - `concerns` — list of dimension gaps
+  Parse: `ambiguity`, `verdict`, `rationale`, `concerns`.
 
-  Display the round result:
+  Display:
   ```
   Round [round] result:
     dimension scores:
-      specificity: X.XX (30%)  ████████░░
-      systems:     X.XX (25%)  ███████░░░
+      [dimension]: X.XX (XX%)  ████████░░
       ...
-    ambiguity:  X.XXX
-    threshold:  X.XXX
+    ambiguity:  X.XXXX
+    threshold:  X.XXXX
     verdict:    ✅ GO | ⚠️ CONDITIONAL | ❌ NO-GO
     ${concerns ? 'concerns: ' + concerns.join(', ') : ''}
   ```
 
-**If user says "skip" or "I don't know":**
-  Proceed to the next round without scoring. Note in the transcript that the user skipped this round.
-  Do not treat a skip as an answer — the dimension score for this round stays as-is.
+**If skip:** Proceed without scoring.
 
-**If user says "exit early":**
+**If exit early:**
   AskUserQuestion
-    question: "Are you sure you want to exit the interview early? The spec will be crystallised from what we have so far, even if ambiguity is above threshold."
+    question: "Exit early? The assessment will be crystallised from what we have so far, even if ambiguity is above threshold."
     options:
       - label: "Yes — exit and crystallise"
       - label: "No — continue the interview"
     multiSelect: false
-  If yes: jump to Phase 4 (crystallise).
+  If yes: jump to Phase 5.
 
-### Step D: Check exit conditions
+**Step D: Check exit conditions**
 
-**GO condition (all must be true):**
-- ambiguity ≤ 0.2
-- all five dimensions ≥ 0.5
+- GO: ambiguity ≤ 0.2 AND all dimensions ≥ 0.5 → proceed to Phase 3
+- CONDITIONAL: ambiguity ≤ 0.35 OR one dimension at 0.4–0.5 → continue with warning
+- NO-GO and round < 10 → continue
+- NO-GO and round ≥ 10 → offer continue or exit
 
-**CONDITIONAL condition:**
-- ambiguity ≤ 0.35
-- OR one dimension at 0.4–0.5
-
-**Exit rules:**
-- If GO: display "AMBIGUITY THRESHOLD MET — ready for execution" and proceed to Phase 3.
-- If CONDITIONAL: display warning and continue unless round cap reached.
-- If NO-GO and round < 10: continue.
-- If NO-GO and round ≥ 10: display warning, offer to continue or exit.
-- If round cap reached: proceed to Phase 3.
-
-### Early exit offer at round 10
-
-If at round 10 the score is still NO-GO:
-
+**Round 10 soft warning if NO-GO:**
 AskUserQuestion
-  question: "We are at round 10 and the ambiguity score is still [X.XXX] — above the 0.2 threshold. The interview can continue, but you may be hitting diminishing returns. What would you like to do?"
+  question: "Round 10 and ambiguity is still [X.XXX] — above the 0.2 threshold. The interview can continue, but you may be hitting diminishing returns."
   options:
     - label: "Continue — keep going"
-      description: "Continue to round 20 (standard) or 40 (deep)."
     - label: "Stop here — crystallise what we have"
-      description: "End the interview and generate the spec with current data."
   multiSelect: false
 
 ---
@@ -253,94 +301,150 @@ AskUserQuestion
 **Trigger:** ambiguity ≤ 0.2 AND all dimensions ≥ 0.5
 
 Display:
+```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 AMBIGUITY THRESHOLD MET ✅
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-All five dimensions scored above minimum.
+All dimensions scored above minimum.
 Ambiguity: [X.XXX] ≤ 0.200
-Ready for spec crystallisation.
-
-Proceed to Phase 3 spec crystallisation.
+Ready for assessment crystallisation.
+```
 
 ---
 
-## Phase 4: Spec Crystallisation
+## Phase 4: Challenge Agents (shared, both tracks)
+
+Challenge agents activate at round thresholds to shift questioning perspective:
+
+| Round | Agent | Role |
+|---|---|---|
+| 4+ | CONTRARIAN | Devil's advocate — "What if the opposite were true?" or "What if this constraint doesn't actually exist?" |
+| 6+ | SIMPLIFIER | Cut to essentials — "What's the simplest version that would still prove value?" |
+| 8+ | ONTOLOGIST | Name the core — "What IS the real blocker here — tech, people, or politics?" |
+
+Incorporate the challenge agent lens into the question, but ask only ONE question per round.
+
+---
+
+## Phase 5: Assessment Crystallisation
 
 ### Step 1: Run the crystal command
 
-Run via Bash:
 ```
-deep-interview crystal --session-id [sessionId] --output-dir [output-dir] 2>&1
+deep-interview crystal --session-id [sessionId] --output-dir ./specs 2>&1
 ```
 
-If the command succeeds, it writes the spec to the output path and prints the path.
+### Step 2: Read and present the assessment
 
-### Step 2: Read and present the spec
+Read: `{output-dir}/deep-interview-{slug}.md`
 
-Run: Read(path="{output-dir}/deep-interview-{slug}.md")
+Display the first 80 lines as a preview.
 
-Display the spec to the user (first 80 lines as a preview), then:
+**Company-level output** (strategic):
+```
+# AI Adoption Readiness: {Company Name}
+
+## Executive Summary
+## AI Maturity Score (1-5)
+## Tier Recommendation (Tier 1-5)
+## Portfolio Scan — Named Agent Projects
+## Layer Inflection Exposure
+## Org Readiness Breakdown
+## Key Blockers Identified
+## Strategic Roadmap (Phase 1-3)
+## Recommended Next Steps
+```
+
+**Project-level output** (tactical):
+```
+# Project Charter: {Project Name}
+
+## Project Brief
+## Go/No-Go Decision
+## Business Case
+## Agent Architecture (Tier, org chart, buy/build per layer)
+## Closed-Loop Architecture
+## Success Metrics
+## Team / RACI
+## Build List
+## Phased Rollout (Week 1-6)
+## Risk Register
+```
+
+Then ask:
 
 AskUserQuestion
-  question: "The spec has been generated. What would you like to do with it?"
-  header: "Spec Ready"
+  question: "The assessment has been generated. What would you like to do with it?"
+  header: "Assessment Ready"
   options:
     - label: "Save and close"
-      description: "Spec is saved — you are done."
+      description: "Assessment is saved — you are done."
     - label: "Refine one section"
       description: "Point to a section that needs more clarity — we will probe further."
     - label: "Export as JSON"
-      description: "Dump the structured spec data as JSON."
+      description: "Dump the structured data as JSON."
   multiSelect: false
 
-**If user selects "Refine one section":**
-  AskUserQuestion
-    question: "Which section needs more clarity? Point to it or describe what is missing."
-    options:
-      - label: "Continue"
-    multiSelect: false
-  Record the refinement request as a new round of questions. Run `deep-interview ask --round [next]` to generate a targeted question. Continue the loop for up to 3 additional rounds, then re-crystallise.
+**If "Refine one section":**
+AskUserQuestion
+  question: "Which section needs more clarity? Point to it or describe what is missing."
+  options:
+    - label: "Continue"
+  multiSelect: false
+Record as a new round. Run `deep-interview ask --round [next]` for up to 3 additional rounds, then re-crystallise.
 
 ---
 
-## Phase 5: Session Summary
+## Phase 6: Session Summary
 
-After the spec is saved (or at any exit point):
-
-Display:
+```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-INTERVIEW COMPLETE
+ASSESSMENT COMPLETE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+  track:     [company | project]
   session:   [sessionId]
   rounds:    [N]
   ambiguity: [X.XXX]
   verdict:   [GO | CONDITIONAL | NO-GO]
   exit:      [threshold-met | round-cap | early-exit]
-  spec:      [output-dir]/deep-interview-[slug].md
-
-The spec is your project charter. Share it with your implementation team.
-It defines the workflow, the success metrics, the systems, and the pilot scope.
+  output:    ./specs/deep-interview-[slug].md
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
 </Steps>
 
 <Tool_Usage>
 - Use `Bash` with `deep-interview init`, `deep-interview ask`, `deep-interview score`, `deep-interview crystal` for all state management
-- Use `AskUserQuestion` for all user-facing questions (this is Claude Code native — no OMC dependency)
-- Use `Read` to load the crystallised spec after crystallisation
-- Use `Write` only if you need to manually save a spec (normally the CLI handles this)
+- Use `AskUserQuestion` for all user-facing questions (Claude Code native — no OMC/OMX dependency)
+- Use `Read` to load the crystallised assessment after crystallisation
+- Use `Write` only if you need to manually save (normally the CLI handles this)
 </Tool_Usage>
 
 <Consultant_Framing>
-When framing the interview, use these principles from the AgentDash consultant knowledge base:
+When framing the interview, use these principles from the AgentDash consulting knowledge base and gstack methodology:
 
 **The IT-Layer Trap:**
-- Never accept "organise SharePoint", "build a RAG chatbot", or "automate our workflow" as the goal
+- Never accept "organise SharePoint", "build a RAG chatbot", or "adopt AI" as the goal
 - Probe until you have the business metric and dollar figure
-- Example: "What does a wrong guess cost you per deal, and how often does it happen?"
 - Translate every IT complaint into: "[Action] causes [dollar/time cost] because [downstream effect]"
+
+**Garry Tan / gstack Office-Hours Discipline:**
+Apply the six forcing questions (gstack /office-hours):
+1. Is the framing correct, or is the client describing a symptom not the problem?
+2. Are the stated constraints real, or are they habits masquerading as requirements?
+3. What's the minimum viable version of this adoption?
+4. What have similar-stage companies in their sector actually tried? What blocked them?
+5. What if the opposite approach were correct?
+6. Who owns the outcome? If the agent fails, whose fault is it?
+
+**CEO Review Modes (adapted):**
+- EXPANSION: CTO describing a narrow use case → probe whether it scales to portfolio
+- SELECTIVE EXPANSION: Some layers named → probe the missing layers
+- HOLD SCOPE: CTO has concrete specifics → challenge whether they're the right specifics
+- REDUCTION: CTO wants many things → force ranking, what's the one that proves the model?
 
 **The Interrogation Ladder:**
 1. Client states an IT problem → "What business outcome is that blocking?"
@@ -379,33 +483,41 @@ Map named systems onto this stack for architecture decisions:
 **Hybridize First:** Buy commodity primitives; build only the differentiator (L4 domain logic + L7 governance).
 </Consultant_Framing>
 
-<Five_Assessment_Dimensions>
+<Track_A_Company_Level>
+**Company-Level (Strategic) Assessment — Key Differences:**
 
-| Dimension | Weight | What it measures |
+| Element | Company-level | Project-level |
 |---|---|---|
-| **specificity** | 30% | Is the primary opportunity concrete? Named workflow, specific inputs/outputs? |
-| **systems** | 25% | Are the systems and data the agent must touch named? Integration points, data quality known? |
-| **success** | 20% | How will the customer know it worked? Named metric, baseline, target? |
-| **risk** | 15% | Error tolerance, regulatory load, approval cadence, audit needs. What happens when the agent is wrong? |
-| **fit** | 10% | Timeline, budget envelope, DRI, stakeholder buy-in. |
+| Persona | Garry Tan-style advisor — direct, pattern-matching | Neutral requirements clarifier |
+| Goal | Assess AI adoption readiness, operating model, portfolio | Crystallise requirements for one specific agent project |
+| Primary output | Portfolio scan, tier recommendation, strategic roadmap | Project charter with pilot scope |
+| Dimension 1 | strategy (30%) | specificity (30%) |
+| Dimension 2 | readiness (25%) | systems (25%) |
+| Dimension 3 | portfolio (20%) | success (20%) |
+| Dimension 4 | risk (15%) | risk (15%) |
+| Dimension 5 | fit (10%) | fit (10%) |
+| Diana Hu lenses | Always on — operating model questions woven in | N/A |
+| Layer inflection | Always on — probe which stack layers are named/missing | N/A |
+| gstack 6 forcing | Always on — premise, constraints, MV, peer patterns, reversal, ownership | As-needed for stuck points |
 
-**Ambiguity Formula:**
-```
-ambiguity = 1 - (specificity × 0.30 + systems × 0.25 + success × 0.20 + risk × 0.15 + fit × 0.10)
-```
+**Diana Hu Operating Model Questions (inject at rounds 2, 4, 6):**
+- Round 2: "Who is the DRI for AI adoption? How is AI governance structured?"
+- Round 4: "How does AI work get funded — CAPEX, OPEX, or project budgets?"
+- Round 6: "What's the current AI team headcount vs. ambition?"
+- Round 8+: "How does the org measure AI success today?"
+</Track_A_Company_Level>
 
-**Minimum scores for GO:**
-- All five dimensions ≥ 0.5
-- ambiguity ≤ 0.2
+<Track_B_Project_Level>
+**Project-Level (Tactical) Assessment:**
 
-**Conditionally ready (proceed with mitigations):**
-- ambiguity ≤ 0.35
-- OR one dimension at 0.4–0.5
+Standard five-dimension Socratic interview. Same challenge agents, same ambiguity gate. Goal is crystallising a single agent project spec ready for execution.
 
-**Not ready:**
-- ambiguity > 0.35
-- OR two+ dimensions < 0.5
-</Five_Assessment_Dimensions>
+Key probes specific to project-level:
+- Closed-loop: "How will you know the agent worked? What metric, what baseline?"
+- Tier shortcut: "You want Tier 5 but have zero agents in production — let's start at Tier 3"
+- Systems: "Which specific systems must the agent touch? Read-only or read-write?"
+- Risk: "What happens when the agent is wrong? Is there a human review gate?"
+</Track_B_Project_Level>
 
 <Challenge_Agents>
 Challenge agents fire at specific rounds to pressure-test the interview:
@@ -421,72 +533,84 @@ Incorporate the challenge agent lens into the question, but ask only ONE questio
 
 <Examples>
 <Good>
-Round 1 question targeting low specificity:
-"You mentioned the agent should handle customer support. Can you be more specific — what is the exact workflow? Who initiates it, what does the agent receive as input, what does it produce as output, and who reviews the output?"
-Why good: Directly probes specificity (30% weight), the highest-weighted dimension.
+Company-level Round 1 targeting strategy (Garry Tan style):
+"You said you're 'starting an AI initiative.' That's a symptom, not a strategy. My pattern-matching across 200+ enterprise deployments says: initiatives without named tier targets and a DRI fail in 6 months. What is the specific tier of agent you're trying to deploy first, and who's accountable for it working?"
+Why good: Pushed back on vague framing immediately. Applied gstack premise challenge. Named the specific failure mode.
 </Good>
 
 <Good>
-Round 3 question targeting systems:
-"You've mentioned Salesforce and Slack. What specific data does the agent need from Salesforce? Is it read-only or does it write back? How does it authenticate? Who has access to the data the agent produces?"
-Why good: Systems dimension is 25% weight — naming integration points is critical for execution.
+Company-level Layer Inflection probe:
+"You've described wanting to go straight to L5 evaluation — building a test suite for agent outputs. But you haven't named a single L2 connector. The agent has no data pipeline yet. How will it evaluate something it can't yet access?"
+Why good: Applied Seven-Layer Stack discipline. Exposed a skipped-layer problem typical of CTOs who read about AI adoption but haven't mapped their stack.
 </Good>
 
 <Good>
-Round 5 question targeting success:
-"How will you know the agent is working? What metric are you tracking — deflection rate, response time, CSAT score? What is the current baseline for that metric, and what improvement target are you aiming for in the pilot?"
-Why good: Success (20% weight) — closed-loop measurement is non-negotiable for agentic workflows.
+Project-level Round 1 targeting specificity:
+"You mentioned the agent should 'handle customer support.' Can you be more specific — what is the exact workflow? Who initiates it, what does the agent receive as input, what does it produce as output, and who reviews the output?"
+Why good: Standard specificity probe. Establishes the workflow skeleton before anything else.
 </Good>
 
 <Good>
-Closed-loop probe in a question:
-"You mentioned the agent will draft RFP responses and send them to the sales team. How do you measure whether the drafted RFP was actually accepted or rejected by the sales team? What is the outcome signal that closes the loop?"
-Why good: Directly probes the four closed-loop components without mentioning the framework by name.
-</Good>
-
-<Good>
-IT-layer trap correction:
-Client: "We need an AI agent to manage our SharePoint."
-Consultant: "What business outcome is SharePoint disorganization blocking?"
-Client: "Our sales team can't find technical specs, so they guess."
-Consultant: "What does a wrong guess cost you per deal, and how often does that happen?"
-Client: "Probably $50K missed revenue per deal, and it affects maybe 20% of our pipeline."
-Consultant: "That's roughly $X per quarter in at-risk revenue. The agent doesn't 'organise SharePoint' — it protects that $X."
-Why good: Never accepted the IT-layer framing. Translated SharePoint chaos into a dollar figure and reframed the agent's purpose.
-</Good>
-
-<Good>
-Tier downgrade correction:
-Client: "We want a fully autonomous AI agent that can make procurement decisions on behalf of the company."
-Consultant: "How many AI agents do you currently have running in production?"
+Project-level Tier downgrade:
+Client: "We want a fully autonomous AI agent that decides procurement on our behalf."
+Consultant: "How many AI agents do you have running in production today?"
 Client: "Zero. We're just starting out."
-Consultant: "I'm going to downgrade that recommendation. A Tier 5 autonomous decision agent is not appropriate as your first agent — that's a trajectory, not a starting point. For a company with zero agents in production, the right first agent is Tier 3: a workflow runner that handles a specific, named, high-value task with approval gates. That builds the muscle for Tier 5 later. Starting at Tier 5 without that foundation is how agentic initiatives fail."
-Why good: Applied the tier-shortcut rejection rule. Gave a concrete downgrade with a path forward.
+Consultant: "I'm going to downgrade that. Tier 5 is not a starting point — it's a destination. For a company with zero agents in production, Tier 3 is right: a workflow runner that handles one named high-value task with approval gates. That builds the muscle for Tier 5 later."
+Why good: Applied tier-shortcut rejection rule. Gave a concrete downgrade with a trajectory.
+</Good>
+
+<Good>
+IT-layer trap correction (company-level):
+CTO: "We need to fix our knowledge management."
+Consultant: "What business outcome is bad knowledge management blocking?"
+CTO: "Our team can't find answers, so they build things twice."
+Consultant: "What does building things twice cost you per quarter, and how often does it happen?"
+CTO: "Maybe $200K in wasted engineering time, happens constantly."
+Consultant: "That's your problem to solve. The agent doesn't 'fix knowledge management' — it prevents $200K/quarter in duplicate engineering spend. That's the pitch."
+Why good: Never accepted IT framing. Translated to dollar figure and reframed the agent's purpose.
+</Good>
+
+<Good>
+Simplifier probe (both tracks):
+"You've described wanting an agent that reads Salesforce, queries your database, drafts an email, sends it to Slack, and tracks the response. What if it only did the first two things — read Salesforce and query the database — and a human handled the rest? Would that still deliver 80% of the value?"
+Why good: Applied Simplifier challenge agent. Forces the client to confront whether they're over-specifying the solution.
 </Good>
 </Examples>
 
 <Escalation_And_Stop_Conditions>
 - If the user declines to answer more than 3 consecutive questions: offer to crystallise from current data or exit
 - Hard stop at round cap (depth-based: 5 / 20 / 40)
-- If ANTHROPIC_API_KEY is not set and CLI fails: display clear error with instructions to set the env var
+- If ANTHROPIC_API_KEY is not set and CLI fails: display clear error with installation instructions
 - If the session state file is missing/corrupted: offer to restart the session
 - If user asks for Tier 5 with zero agents in production: explicitly downgrade and explain why
-- If the user provides an IT-layer problem without a business-outcome translation: probe until the dollar/time cost is named — do not let IT-layer framing pass
+- If the user provides an IT-layer problem without a business-outcome translation: probe until the dollar/time cost is named
+- Company-level: If the CTO describes only L4/L5 without naming L1/L2: probe the missing foundation layers before proceeding
 </Escalation_And_Stop_Conditions>
 
 <Final_Checklist>
-- [ ] Session initialised via `deep-interview init --seed "..." --depth [depth]`
+- [ ] Track detected or confirmed via AskUserQuestion
+- [ ] Session initialised via `deep-interview init --seed "..." --depth [depth] --track [company|project]`
 - [ ] Session ID extracted and confirmed
+- [ ] Company-level: Diana Hu operating model questions applied at rounds 2, 4, 6, 8+
+- [ ] Company-level: Layer Inflection Exposure probed (Seven-Layer Stack)
+- [ ] Project-level: closed-loop components probed in at least one question
 - [ ] Each round uses `deep-interview ask` to generate questions
 - [ ] Each answer recorded and scored via `deep-interview score`
 - [ ] Ambiguity score checked after every round
+- [ ] Challenge agents activated at correct thresholds (round 4, 6, 8)
 - [ ] Early exit offer made at round 10 if score is NO-GO
 - [ ] GO / CONDITIONAL / NO-GO verdict presented after each round
-- [ ] Spec crystallised via `deep-interview crystal` when exit conditions met
-- [ ] Spec path confirmed and shared with user
+- [ ] Assessment crystallised via `deep-interview crystal` when exit conditions met
+- [ ] Correct output format presented (company-level portfolio scan vs. project-level charter)
 - [ ] IT-layer framing translated to business-layer language in every question
-- [ ] Closed-loop components probed in at least one question
 - [ ] Tier shortcut correction applied if Tier 5 requested with zero production agents
 </Final_Checklist>
+
+<References>
+- AgentDash Research (competitive intelligence): https://washington-smoky.vercel.app/
+- GStack methodology (office-hours, CEO review, Karpathy failure modes): https://github.com/garrytan/gstack
+- Diana Hu operating model: layer-inflection exposure, AI maturity scoring
+- AgentDash consulting knowledge: knowledge.md (IT-layer trap, tier classification, WACT, Seven-Layer Stack)
+</References>
 
 Task: {{ARGUMENTS}}

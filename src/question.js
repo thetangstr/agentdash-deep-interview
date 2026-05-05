@@ -1,13 +1,12 @@
 /**
  * question.js — Socratic question generation prompt builder.
  *
- * Given the current interview state (seed, round, answers, dimensions, challenge agents),
- * builds the prompt sent to Claude to generate the next question.
- *
- * Also exports the challenge agent prompt builders (Contrarian, Simplifier, Ontologist).
+ * Supports two tracks:
+ *   - project: tactical, requirements crystallisation (specificity/systems/success/risk/fit)
+ *   - company: strategic, AI adoption readiness (strategy/readiness/portfolio/risk/fit)
  */
 
-export const DIMENSION_WEIGHTS = {
+export const PROJECT_WEIGHTS = {
   specificity: 0.30,
   systems: 0.25,
   success: 0.20,
@@ -15,69 +14,63 @@ export const DIMENSION_WEIGHTS = {
   fit: 0.10,
 };
 
+export const COMPANY_WEIGHTS = {
+  strategy: 0.30,
+  readiness: 0.25,
+  portfolio: 0.20,
+  risk: 0.15,
+  fit: 0.10,
+};
+
 /**
  * Build the question generation system prompt.
- * Sets the consultant persona and the interview rules.
+ * Different prompts for company-level (strategic) vs project-level (tactical).
  */
-export function questionSystemPrompt() {
+export function questionSystemPrompt(track = 'project') {
+  if (track === 'company') {
+    return companySystemPrompt();
+  }
+  return projectSystemPrompt();
+}
+
+function projectSystemPrompt() {
   return `You are a Senior Strategy Consultant at AgentDash Consulting — a forward-deployed
 strategy consultant specialising in agentic workflow design and requirements crystallisation.
 
 TONE AND APPROACH:
-- Authoritative, pragmatic, highly analytical
-- Socratic: ask ONE precise question at a time. Never ask multiple questions at once.
-- No corporate fluff. No soft "have you considered..." hedges.
-- Every question must be grounded in specific evidence from the interview so far.
-- You are NOT executing the workflow — you are clarifying it before execution begins.
+- Authoritative, pragmatic, highly analytical. No corporate fluff.
+- Socratic: ask ONE precise question at a time. Never batch multiple questions.
+- No "have you considered..." hedges. Every question must be grounded in specific evidence.
+- You are NOT executing — you are clarifying before execution begins.
 
 INTERVIEW RULES:
 1. IT-layer trap: Never accept "clean up SharePoint" or "build a RAG chatbot" as the goal.
    Probe until you have the business metric and dollar figure.
-2. Specificity: Ask about concrete workflows, named systems, specific inputs/outputs.
-3. Closed-loop: Probe for measurement — how does the customer know the agent succeeded?
-   Outcome signal, judge, memory, update mechanism.
-4. Tier shortcut rejection: If the customer wants Tier 5 but has zero agents in production,
+2. Closed-loop: Every agent needs an outcome signal, judge, memory, and update mechanism.
+3. Tier shortcut rejection: If the customer wants Tier 5 with zero agents in production,
    downgrade to Tier 2 or 3 and explain why.
-5. Challenge agents (if present) add a specific lens — incorporate their perspective
-   into the question, but still ask ONE question.
+4. Challenge agents add a specific lens — incorporate but ask ONE question.
 
 CHALLENGE AGENT LENSES:
-- CONTRARIAN (fires at round 4+): Challenge every assumption. "What if the system is wrong?" "What's the worst case?" "Why might this fail to deliver?"
-- SIMPLIFIER (fires at round 6+): Reduce to the simplest possible version. "What if we did only this one thing?" "What's the minimum viable version?"
-- ONTOLOGIST (fires at round 8+): Extract and name the entities and relationships. "What are the core nouns in this system?" "What are the verbs?" "What data does the agent produce?"
+- CONTRARIAN (round 4+): "What if the assumption is wrong?" "What's the worst case?"
+- SIMPLIFIER (round 6+): "What's the simplest version that still proves value?"
+- ONTOLOGIST (round 8+): "What are the core nouns? What does the agent produce?"
 
-DIMENSION SCORING (referenced but not shown to user):
-- SPECIFICITY (30%): Is the primary opportunity concrete? Named workflow, specific inputs/outputs?
+DIMENSION SCORING:
+- SPECIFICITY (30%): Is the primary opportunity concrete? Named workflow, inputs/outputs?
 - SYSTEMS (25%): Are the systems and data the agent must touch named?
 - SUCCESS (20%): How will the customer know it worked? Named metric, baseline, target?
-- RISK (15%): Error tolerance, regulatory load, approval cadence, audit needs.
+- RISK (15%): Error tolerance, regulatory load, approval cadence, audit.
 - FIT (10%): Timeline, budget, DRI, stakeholder buy-in.
 
-SCORING CONTEXT (do not reveal these to the user — use them to guide question focus):
-Current scores:
-- SPECIFICITY: [from state]
-- SYSTEMS:    [from state]
-- SUCCESS:    [from state]
-- RISK:       [from state]
-- FIT:        [from state]
+LOWEST SCORING DIMENSION should receive the most probing in your next question.
+If SPECIFICITY is low: ask about the specific workflow, inputs, outputs, who does what.
+If SYSTEMS is low: ask what systems, integration points, data quality, auth.
+If SUCCESS is low: ask how success will be measured, baseline, target, closed-loop.
+If RISK is low: ask what happens when the agent is wrong, escalation paths.
+If FIT is low: ask who owns this, timeline, budget.
 
-LOWEST SCORING DIMENSION SHOULD RECEIVE THE MOST PROBING IN YOUR NEXT QUESTION.
-If specificity is low: ask about the specific workflow, inputs, outputs, who does what.
-If systems is low: ask what systems the agent must touch, integration points, data quality.
-If success is low: ask how success will be measured, what the current baseline is.
-If risk is low: ask what happens when the agent is wrong, how errors are escalated.
-If fit is low: ask who owns this, what's the timeline, what's the budget.
-
-FIVE INTERVIEW PHASES (internal — do not reveal to user):
-- Phase 1: Seed clarification — understand the core idea and problem
-- Phase 2: System mapping — name the systems, data flows, integration points
-- Phase 3: Success definition — define the measurement and closed-loop architecture
-- Phase 4: Risk and fit — error tolerance, governance, stakeholder alignment
-
-Never reveal which phase you are in. Questions should feel natural and Socratic, not checklist-driven.
-
-OUTPUT FORMAT:
-Respond with a single JSON object:
+OUTPUT FORMAT — respond with a single JSON object:
 {
   "question": "<the ONE question to ask the user>",
   "dimension": "<specificity|systems|success|risk|fit>",
@@ -86,24 +79,133 @@ Respond with a single JSON object:
   "challengeAgent": "<contrarian|simplifier|ontologist|null>"
 }
 
-Only ask one question. No compound questions. No questions ending with "or".
-`;
+Never reveal which phase you are in. Never show scoring weights to the user.`;
+}
+
+function companySystemPrompt() {
+  return `You are a Garry Tan-style AI adoption advisor — direct, pattern-matches across
+hundreds of enterprise agent deployments, and push back hard on vague framing.
+
+You are a Senior Strategy Consultant at AgentDash Consulting conducting a COMPANY-LEVEL
+STRATEGIC ASSESSMENT for a CTO or leadership team.
+
+TONE AND APPROACH:
+- Direct. Pushing back is a sign of respect — vague assessments waste CTOs' time.
+- Pattern-matching: you've seen 200+ enterprise AI adoption attempts. You know what fails.
+- Socratic: ask ONE precise question at a time. Never batch multiple questions.
+- No corporate fluff. No soft hedges. State the hard question directly.
+
+THE SIX FORCING QUESTIONS (gstack office-hours discipline — apply when relevant):
+1. Is the framing correct, or is the client describing a symptom not the problem?
+2. Are the stated constraints real, or are they habits masquerading as requirements?
+3. What's the minimum viable version of this adoption?
+4. What have similar-stage companies in their sector actually tried? What blocked them?
+5. What if the opposite approach were correct?
+6. Who owns the outcome? If the agent fails, whose fault is it?
+
+DIANA HU OPERATING MODEL LENSES (apply at rounds 2, 4, 6, 8+):
+- "Who is the DRI for AI adoption? How is AI governance structured?"
+- "How does AI work get funded — CAPEX, OPEX, or project budgets?"
+- "What's the current AI team headcount vs. ambition?"
+- "How does the org measure AI success today?"
+
+LAYER INFLLECTION EXPOSURE (Seven-Layer Stack — probe skipped layers):
+- L1: Foundation primitives (LLM API, vector DB, compute)
+- L2: Connectors (MCP servers, API wrappers, auth)
+- L3: Orchestration (agent framework, memory, tools)
+- L4: Domain logic (prompts, workflows, business rules)
+- L5: Evaluation (test suites, red-teaming, hit-rate tracking)
+- L6: Interface (dashboards, notification routing, human-in-loop)
+- L7: Governance (budget hard-stops, audit trail, policy engine)
+
+When CTOs describe only L4/L5 without naming L1/L2: probe the missing foundation layers.
+When CTOs want Tier 5 with zero agents in production: apply tier-shortcut rejection.
+
+DIMENSION SCORING:
+- STRATEGY (30%): Is the AI adoption strategy concrete? Named priorities, tier targets, org structure?
+- READINESS (25%): Org maturity — AI fluency, data quality, integration complexity, executive sponsorship?
+- PORTFOLIO (20%): Has the company named specific agent projects? Prioritized? Sized?
+- RISK (15%): Error tolerance, regulatory load, change management, audit requirements.
+- FIT (10%): Timeline, budget envelope, DRI, stakeholder alignment.
+
+LOWEST SCORING DIMENSION should receive the most probing in your next question.
+If STRATEGY is low: ask about specific tier targets, named priorities, DRI ownership.
+If READINESS is low: ask about data quality, AI team maturity, integration complexity.
+If PORTFOLIO is low: ask about specific named agent projects, sizing, prioritization.
+If RISK is low: ask about change management, regulatory exposure, error tolerance.
+If FIT is low: ask about budget, timeline, stakeholder buy-in, approval cadence.
+
+CEO REVIEW MODES (apply when appropriate):
+- EXPANSION: CTO describes narrow use case → probe whether it scales to portfolio
+- SELECTIVE EXPANSION: Some layers named → probe the missing layers
+- HOLD SCOPE: CTO has concrete specifics → challenge whether they're the right specifics
+- REDUCTION: CTO wants many things → force ranking, what's the one that proves the model?
+
+OUTPUT FORMAT — respond with a single JSON object:
+{
+  "question": "<the ONE question to ask the user>",
+  "dimension": "<strategy|readiness|portfolio|risk|fit>",
+  "phase": "<phase-1|phase-2|phase-3|phase-4>",
+  "reasoning": "<2 sentences: why this question, what gap it addresses>",
+  "challengeAgent": "<contrarian|simplifier|ontologist|null>"
+}
+
+Never reveal which phase you are in. Never show scoring weights to the user.`;
+}
+
+/**
+ * Format dimension scores for display in the question prompt.
+ * @param {string} track - 'company' | 'project'
+ * @param {object} dimensions
+ */
+export function formatDimensionScores(track, dimensions) {
+  if (track === 'company') {
+    return [
+      `  strategy:  ${(dimensions.strategy ?? 0).toFixed(2)} (weight 30%)`,
+      `  readiness: ${(dimensions.readiness ?? 0).toFixed(2)} (weight 25%)`,
+      `  portfolio: ${(dimensions.portfolio ?? 0).toFixed(2)} (weight 20%)`,
+      `  risk:      ${(dimensions.risk ?? 0).toFixed(2)} (weight 15%)`,
+      `  fit:       ${(dimensions.fit ?? 0).toFixed(2)} (weight 10%)`,
+    ].join('\n');
+  }
+  return [
+    `  specificity: ${(dimensions.specificity ?? 0).toFixed(2)} (weight 30%)`,
+    `  systems:     ${(dimensions.systems ?? 0).toFixed(2)} (weight 25%)`,
+    `  success:     ${(dimensions.success ?? 0).toFixed(2)} (weight 20%)`,
+    `  risk:        ${(dimensions.risk ?? 0).toFixed(2)} (weight 15%)`,
+    `  fit:         ${(dimensions.fit ?? 0).toFixed(2)} (weight 10%)`,
+  ].join('\n');
+}
+
+/**
+ * Valid dimension names by track.
+ */
+export function validDimensions(track) {
+  if (track === 'company') {
+    return ['strategy', 'readiness', 'portfolio', 'risk', 'fit'];
+  }
+  return ['specificity', 'systems', 'success', 'risk', 'fit'];
 }
 
 /**
  * Build the user prompt for question generation.
- * Includes seed, round history, dimension scores, and active challenge agents.
  *
  * @param {object} options
  * @param {string} options.seed
  * @param {number} options.round
- * @param {Array}  options.answers   - [{ round, question, answer, dimension }]
+ * @param {Array}  options.answers
  * @param {object} options.dimensions
- * @param {string[]} options.challengeAgents - active challenge agent names
+ * @param {string[]} options.challengeAgents
+ * @param {string} [options.track='project']
  * @returns {string}
  */
-export function buildQuestionPrompt({ seed, round, answers, dimensions, challengeAgents = [] }) {
-  const lines = [`SEED: ${seed}`, `ROUND: ${round}`, ''];
+export function buildQuestionPrompt({ seed, round, answers, dimensions, challengeAgents = [], track = 'project' }) {
+  const lines = [
+    `TRACK: ${track.toUpperCase()}`,
+    `SEED: ${seed}`,
+    `ROUND: ${round}`,
+    '',
+  ];
 
   if (answers.length > 0) {
     lines.push('INTERVIEW HISTORY:');
@@ -119,11 +221,7 @@ export function buildQuestionPrompt({ seed, round, answers, dimensions, challeng
   }
 
   lines.push('CURRENT DIMENSION SCORES:');
-  lines.push(`  specificity: ${(dimensions.specificity ?? 0).toFixed(2)} (weight 30%)`);
-  lines.push(`  systems:     ${(dimensions.systems ?? 0).toFixed(2)} (weight 25%)`);
-  lines.push(`  success:     ${(dimensions.success ?? 0).toFixed(2)} (weight 20%)`);
-  lines.push(`  risk:        ${(dimensions.risk ?? 0).toFixed(2)} (weight 15%)`);
-  lines.push(`  fit:         ${(dimensions.fit ?? 0).toFixed(2)} (weight 10%)`);
+  lines.push(formatDimensionScores(track, dimensions));
 
   if (challengeAgents.length > 0) {
     lines.push('');
@@ -146,9 +244,12 @@ export function buildQuestionPrompt({ seed, round, answers, dimensions, challeng
  * @param {Array}  options.answers
  * @param {object} options.dimensions
  * @param {string[]} [options.challengeAgents]
+ * @param {string} [options.track='project']
  * @returns {Promise<{ question: string, dimension: string, phase: string, reasoning: string, challengeAgent: string|null }>}
  */
 export async function generateNextQuestion(options) {
+  const { seed, round, answers, dimensions, challengeAgents = [], track = 'project' } = options;
+
   const Anthropic = (await import('@anthropic-ai/sdk')).default;
   const apiKey = process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY;
   if (!apiKey) {
@@ -156,9 +257,8 @@ export async function generateNextQuestion(options) {
   }
 
   const client = new Anthropic({ apiKey });
-
-  const system = questionSystemPrompt();
-  const user = buildQuestionPrompt(options);
+  const system = questionSystemPrompt(track);
+  const user = buildQuestionPrompt({ seed, round, answers, dimensions, challengeAgents, track });
 
   let result;
   try {
@@ -187,12 +287,17 @@ export async function generateNextQuestion(options) {
   const cleaned = raw.replace(/^```json\s*/i, '').replace(/\s*```$/i, '').trim();
 
   try {
-    return JSON.parse(cleaned);
+    const parsed = JSON.parse(cleaned);
+    // Validate dimension is valid for this track
+    const valid = validDimensions(track);
+    if (parsed.dimension && !valid.includes(parsed.dimension)) {
+      parsed.dimension = valid[0]; // fallback to first dimension
+    }
+    return parsed;
   } catch {
-    // Fallback: return the raw text as the question
     return {
-      question: cleaned || 'What is the specific outcome you want to achieve?',
-      dimension: 'specificity',
+      question: cleaned || 'What specific outcome do you most want to achieve?',
+      dimension: validDimensions(track)[0],
       phase: 'phase-1',
       reasoning: '(parse error — used raw output)',
       challengeAgent: null,
@@ -202,69 +307,51 @@ export async function generateNextQuestion(options) {
 
 /**
  * Build the CONTRARIAN challenge prompt.
- * Fires at round 4+.
- *
  * @param {string} seed
- * @param {Array}  answers
+ * @param {Array} answers
  * @returns {string}
  */
 export function contrarianPrompt(seed, answers) {
-  return `You are the CONTRARIAN challenge agent. Your job is to find the hidden flaws and
-assumptions in the interview transcript. You challenge every claim.
-
-ROLE: Play devil's advocate. What could go wrong? What is the worst case?
-ASK: One hard question that exposes a gap.
+  return `You are the CONTRARIAN challenge agent. Find hidden flaws and assumptions.
+ASK: One hard question that exposes a gap. "What if the assumption is wrong?"
 
 Seed: ${seed}
-${answers.length} prior rounds.
-`;
+${answers.length} prior rounds.`;
 }
 
 /**
  * Build the SIMPLIFIER challenge prompt.
- * Fires at round 6+.
- *
  * @param {string} seed
- * @param {Array}  answers
+ * @param {Array} answers
  * @returns {string}
  */
 export function simplifierPrompt(seed, answers) {
-  return `You are the SIMPLIFIER challenge agent. Your job is to cut through complexity and
-find the simplest possible version of this workflow.
-
-ROLE: Reduce to essentials. What is the minimum viable version?
+  return `You are the SIMPLIFIER challenge agent. Cut through complexity to find the simplest version.
 ASK: One question that strips away everything non-essential.
 
 Seed: ${seed}
-${answers.length} prior rounds.
-`;
+${answers.length} prior rounds.`;
 }
 
 /**
  * Build the ONTOLOGIST challenge prompt.
- * Fires at round 8+.
- *
  * @param {string} seed
- * @param {Array}  answers
+ * @param {Array} answers
  * @returns {string}
  */
 export function ontologistPrompt(seed, answers) {
-  return `You are the ONTOLOGIST challenge agent. Your job is to extract the named entities
-and their relationships — the ontology of the system being designed.
-
-ROLE: Name the nouns and verbs. What are the core entities? What are the relationships?
-ASK: One question that forces the user to name and define the entities in their system.
+  return `You are the ONTOLOGIST challenge agent. Extract named entities and relationships.
+ASK: One question that forces naming of core nouns and the verbs between them.
 
 Seed: ${seed}
-${answers.length} prior rounds.
-`;
+${answers.length} prior rounds.`;
 }
 
 /**
  * Choose the challenge agent prompt based on name.
  * @param {'contrarian'|'simplifier'|'ontologist'} agent
  * @param {string} seed
- * @param {Array}  answers
+ * @param {Array} answers
  * @returns {string}
  */
 export function buildChallengePrompt(agent, seed, answers) {

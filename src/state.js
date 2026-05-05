@@ -26,9 +26,10 @@ export function ensureStateDir() {
  * @param {string} options.seed   - The initial seed / idea
  * @param {string} [options.sessionId] - Optional session ID; a UUID is generated if omitted
  * @param {string} [options.depth] - 'quick' | 'standard' | 'deep'
+ * @param {string} [options.track] - 'company' | 'project'. Default: 'project'
  * @returns {object} the initial state
  */
-export function createSession({ seed, sessionId = null, depth = 'standard' } = {}) {
+export function createSession({ seed, sessionId = null, depth = 'standard', track = 'project' } = {}) {
   const id = sessionId || uuidv4();
 
   // Derive slug from first 60 chars of seed (alphanumeric only)
@@ -41,21 +42,32 @@ export function createSession({ seed, sessionId = null, depth = 'standard' } = {
   const depthLimits = { quick: 5, standard: 20, deep: 40 };
   const maxRounds = depthLimits[depth] ?? 20;
 
+  const projectDimensions = {
+    specificity: 0.0,
+    systems: 0.0,
+    success: 0.0,
+    risk: 0.0,
+    fit: 0.0,
+  };
+
+  const companyDimensions = {
+    strategy: 0.0,
+    readiness: 0.0,
+    portfolio: 0.0,
+    risk: 0.0,
+    fit: 0.0,
+  };
+
   const state = {
     sessionId: id,
     slug,
     seed,
     depth,
+    track,              // 'company' | 'project'
     maxRounds,
     round: 0,
     phase: 'phase-1', // phase-1 | phase-2 | phase-3 | phase-4 | done
-    dimensions: {
-      specificity: 0.0,
-      systems: 0.0,
-      success: 0.0,
-      risk: 0.0,
-      fit: 0.0,
-    },
+    dimensions: track === 'company' ? companyDimensions : projectDimensions,
     answers: [],         // Array of { round, question, answer, dimension }
     questions: [],       // Array of { round, text }
     ontology: {},        // Extracted entity/relationship map
@@ -135,18 +147,33 @@ export function recordAnswer(state, { question, answer, dimension }) {
 /**
  * Update the dimension scores after scoring.
  * @param {object} state
- * @param {{ specificity: number, systems: number, success: number, risk: number, fit: number }} scores
+ * @param {object} scores - dimension scores appropriate to track
  */
 export function updateDimensions(state, scores) {
   state.dimensions = { ...state.dimensions, ...scores };
   const d = state.dimensions;
-  state.ambiguity = Math.max(0, 1 - (
-    d.specificity * 0.30 +
-    d.systems * 0.25 +
-    d.success * 0.20 +
-    d.risk * 0.15 +
-    d.fit * 0.10
-  ));
+
+  let ambiguity;
+  if (state.track === 'company') {
+    // Company-level: strategy 30%, readiness 25%, portfolio 20%, risk 15%, fit 10%
+    ambiguity = Math.max(0, 1 - (
+      (d.strategy ?? 0) * 0.30 +
+      (d.readiness ?? 0) * 0.25 +
+      (d.portfolio ?? 0) * 0.20 +
+      (d.risk ?? 0) * 0.15 +
+      (d.fit ?? 0) * 0.10
+    ));
+  } else {
+    // Project-level: specificity 30%, systems 25%, success 20%, risk 15%, fit 10%
+    ambiguity = Math.max(0, 1 - (
+      (d.specificity ?? 0) * 0.30 +
+      (d.systems ?? 0) * 0.25 +
+      (d.success ?? 0) * 0.20 +
+      (d.risk ?? 0) * 0.15 +
+      (d.fit ?? 0) * 0.10
+    ));
+  }
+  state.ambiguity = ambiguity;
 }
 
 /**
