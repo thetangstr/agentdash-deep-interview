@@ -91,7 +91,21 @@ AskUserQuestion
 
 Record the free-text description as `seed`. Record the selected depth label (quick | standard | deep). Default to "standard".
 
-### Step 3: Initialise state via CLI
+### Step 3: Round 0 — Collect company/project context
+
+Before running `deep-interview init`, collect basic intake information in Round 0.
+
+AskUserQuestion
+  question: "**[Company-level]** What is the company's name and website?\n\n**[Project-level]** What is the project name, the company or team running it, and the primary goal in one sentence?\n\nThis helps us name the output correctly and tailor questions to your context."
+  header: "Round 0 — Context"
+  options:
+    - label: "Company name + website provided"
+    - label: "Company name + website not available"
+  multiSelect: false
+
+If user provides company name and website, record these. If not available, use placeholders (e.g. "Acme Corp" / "acme.com").
+
+### Step 4: Initialise state via CLI
 
 Run via Bash:
 ```
@@ -228,22 +242,35 @@ Parse the JSON output. Extract:
 
 **Step B: Ask the question**
 
-Display:
+Run via Bash to get the JSON output:
 ```
+deep-interview ask --round [round] --session-id [sessionId] 2>&1
+```
+
+Parse the JSON output. Extract:
+- `question` — the question to ask
+- `dimension` — which dimension this probes
+- `track` — company or project
+- `reasoning` — why this question was generated
+- `whyContext` — why we are asking this NOW (the weakest dimension gap this targets)
+- `options` — array of contextually specific choices from the model, each with `label` and `description`
+- `challengeAgent` — which challenge agent fired (if any)
+- `ambiguity` — current ambiguity score
+
+Display:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ROUND [round] / [maxRounds] — [dimension] / [track]
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ${challengeAgent ? `[Challenge agent: ${challengeAgent}]` : ''}
+Why we're asking: [whyContext]
 Current ambiguity: [ambiguity]
-```
+
+[question]
 
 AskUserQuestion
   question: "[question]"
   header: "Round [round] — [dimension]"
-  options:
-    - label: "Answer"
-    - label: "I don't know / skip"
-    - label: "Exit interview early"
+  options: [from JSON options array — include all choices verbatim. Ensure "My answer (describe)" is present as an option if not already in the list]
   multiSelect: false
 
 **Step C: Handle answer**

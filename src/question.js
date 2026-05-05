@@ -76,8 +76,21 @@ OUTPUT FORMAT — respond with a single JSON object:
   "dimension": "<specificity|systems|success|risk|fit>",
   "phase": "<phase-1|phase-2|phase-3|phase-4>",
   "reasoning": "<2 sentences: why this question, what gap it addresses>",
+  "whyContext": "<1-2 sentences: why we are asking this NOW — what is the weakest dimension gap this targets and why fixing it matters>",
+  "options": [
+    { "label": "<contextually specific choice A>", "description": "<why this choice is relevant>" },
+    { "label": "<contextually specific choice B>", "description": "<why this choice is relevant>" }
+  ],
   "challengeAgent": "<contrarian|simplifier|ontologist|null>"
 }
+
+OPTIONS REQUIREMENTS:
+- Provide 2-4 contextually specific options that reflect what the model of the world suggests as plausible answers based on the interview so far
+- Options must be grounded in the specific context of the interview, not generic templates
+- Include an implicit or explicit "other / free-text" option if none of the above fit perfectly
+- After options, always include a free-text answer option labeled "My answer (describe)"
+- After options, always include "I don't know / skip this question"
+- Never show the user the dimension weights or scoring system
 
 Never reveal which phase you are in. Never show scoring weights to the user.`;
 }
@@ -147,8 +160,20 @@ OUTPUT FORMAT — respond with a single JSON object:
   "dimension": "<strategy|readiness|portfolio|risk|fit>",
   "phase": "<phase-1|phase-2|phase-3|phase-4>",
   "reasoning": "<2 sentences: why this question, what gap it addresses>",
+  "whyContext": "<1-2 sentences: why we are asking this NOW — what is the weakest dimension gap this targets and why fixing it matters>",
+  "options": [
+    { "label": "<contextually specific choice A>", "description": "<why this choice is relevant>" },
+    { "label": "<contextually specific choice B>", "description": "<why this choice is relevant>" }
+  ],
   "challengeAgent": "<contrarian|simplifier|ontologist|null>"
 }
+
+OPTIONS REQUIREMENTS:
+- Provide 2-4 contextually specific options grounded in what you've learned about this company
+- Options must reflect the specific situation — company size, industry, current AI maturity, named blockers
+- Include "My answer (describe)" for free-text if none of the above fit
+- Always include "I don't know / skip this question" as the last option
+- Never show dimension weights or scoring to the user
 
 Never reveal which phase you are in. Never show scoring weights to the user.`;
 }
@@ -300,6 +325,11 @@ export async function generateNextQuestion(options) {
       dimension: validDimensions(track)[0],
       phase: 'phase-1',
       reasoning: '(parse error — used raw output)',
+      whyContext: 'We need more context to proceed with the assessment.',
+      options: [
+        { label: 'My answer (describe)', description: 'Free-text answer' },
+        { label: "I don't know / skip", description: 'Skip this question' },
+      ],
       challengeAgent: null,
     };
   }

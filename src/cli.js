@@ -287,6 +287,11 @@ async function cmdAsk(args) {
     phase: q.phase,
     question: q.question,
     reasoning: q.reasoning,
+    whyContext: q.whyContext || q.reasoning,
+    options: q.options || [
+      { label: 'My answer (describe)', description: 'Free-text answer' },
+      { label: "I don't know / skip", description: 'Skip this question' },
+    ],
     challengeAgent: q.challengeAgent,
     ambiguity: state.ambiguity?.toFixed(3) ?? '?',
     maxRounds: state.maxRounds,
