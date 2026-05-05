@@ -1,6 +1,6 @@
 # @agentdash/deep-interview
 
-Standalone Socratic deep-interview with mathematical ambiguity gating for agentic workflow requirements crystallisation.
+Socratic deep-interview skill with full AgentDash consulting context — for agentic workflow requirements crystallisation. Includes the interview engine (CLI + API), consultant knowledge base, and report templates.
 
 ## What it does
 
@@ -148,7 +148,38 @@ src/
   output.js   — path resolution, slug derivation
 
 skills/deep-interview/
-  SKILL.md    — Claude Code skill definition (invoked via /deep-interview)
+  SKILL.md    — Claude Code skill (invoke via /deep-interview)
+
+knowledge.md   — Consultant frameworks (IT-layer trap, tier classification, WACT, Seven-Layer Stack)
+strategy.md    — Report templates (company/project assessment formats, DOCX config)
+docs/
+  CONSULTANT_GUIDE.md  — Quick-start guide for consultants running engagements
+clients/
+  README.md    — Engagement lifecycle, privacy guide
+  .engagements/ — Active engagement records (gitignored)
+  examples/   — Anonymized sample outputs
+```
+
+## Using with Claude Code
+
+Add to your `~/.claude/CLAUDE.md`:
+
+```
+@import ~/agentdash-deep-interview/skills/deep-interview/SKILL.md
+@import ~/agentdash-deep-interview/knowledge.md
+@import ~/agentdash-deep-interview/strategy.md
+```
+
+Then inside Claude Code:
+
+```
+/deep-interview
+```
+
+Or use the skill directly:
+
+```
+Use the deep-interview skill to clarify my project: an AI agent that handles...
 ```
 
 ## Key design decisions

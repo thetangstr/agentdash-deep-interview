@@ -363,6 +363,20 @@ Every agentic workflow must have:
 - Tier 5: Autonomous Research/Decision Agent (multi-day work, writes-back, spawns subagents)
 
 **Tier shortcut rejection:** If the customer wants Tier 5 but has zero agents in production, downgrade to Tier 2 or 3 and explain why.
+
+**Seven-Layer Stack:**
+Map named systems onto this stack for architecture decisions:
+| Layer | Description |
+|---|---|
+| L1 | Foundation primitives (LLM API, vector DB, compute) |
+| L2 | Connectors (MCP servers, API wrappers, auth) |
+| L3 | Orchestration (agent framework, memory, tools) |
+| L4 | Domain logic (prompts, workflows, business rules) |
+| L5 | Evaluation (test suites, red-teaming, hit-rate tracking) |
+| L6 | Interface (dashboards, notification routing, human-in-loop) |
+| L7 | Governance (budget hard-stops, audit trail, policy engine) |
+
+**Hybridize First:** Buy commodity primitives; build only the differentiator (L4 domain logic + L7 governance).
 </Consultant_Framing>
 
 <Five_Assessment_Dimensions>
