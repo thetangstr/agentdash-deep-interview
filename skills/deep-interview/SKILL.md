@@ -109,61 +109,44 @@ AskUserQuestion
 
 Record the selected depth label (quick | standard | deep). Default to "standard".
 
-### Step 3: Round 0 — Collect company/project context
+### Step 3: Collect basic facts (before CLI)
 
-Before running `deep-interview init`, collect basic intake information in Round 0. Use two-step for fact collection: intent question first, then immediate free-text follow-on.
-
-**Company-level — ask for company name and website:**
+Before running `deep-interview init`, collect the company/project facts via AskUserQuestion. This information seeds the CLI session.
 
 AskUserQuestion
-  question: "**[Company-level]** Do you have the company's name and website ready?"
-  header: "Round 0 — Company"
+  question: "Let's get started. Here are the basics I need:\n\n1. **Company name + website**\n2. **Industry / sector**\n3. **Approximate size** (employees or revenue)\n\nExample: \"Acme Corp — acme.com, Manufacturing, 500 employees\""
+  header: "Basic Facts"
   options:
-    - label: "I have it ready"
-      description: "I'll type it in the next step"
-    - label: "Not available"
-      description: "I don't have this right now"
-    - label: "Use placeholder"
-      description: "Use \"Acme Corp / acme.com\" as a placeholder"
+    - label: "I have the details ready"
+      description: "Use the free-text field to provide company name, website, sector, and size"
+    - label: "Use placeholders"
+      description: "Use generic placeholders — we'll fill in specifics during the interview"
   multiSelect: false
 
-**If "I have it ready":** immediately follow with a second AskUserQuestion:
+**If "I have the details ready":** immediately follow with a second AskUserQuestion (no LLM call — just presents the free-text input):
 
 AskUserQuestion
-  question: "What is the company's name and website?\n\nPlease provide company name and URL (e.g. \"Acme Corp — acme.com\")."
-  header: "Round 0 — Company"
+  question: "Please provide:\n1. Company name + website\n2. Industry / sector\n3. Approximate size (employees or revenue)\n\nExample: \"Acme Corp — acme.com, Manufacturing, 500 employees\""
+  header: "Basic Facts"
   options:
-    - label: "Not available"
+    - label: "Use placeholders instead"
   multiSelect: false
 
-Record the answer as `company_name` and `company_website`.
-
-**Project-level — ask for project context:**
-
-AskUserQuestion
-  question: "**[Project-level]** Do you have the project name, company/team, and primary goal ready?"
-  header: "Round 0 — Project"
-  options:
-    - label: "I have it ready"
-      description: "I'll type it in the next step"
-    - label: "Not available"
-      description: "I don't have this right now"
-    - label: "Use placeholder"
-      description: "Use a generic placeholder"
-  multiSelect: false
-
-**If "I have it ready":** immediately follow with a second AskUserQuestion:
-
-AskUserQuestion
-  question: "What is the project name, the company or team, and the primary goal in one sentence?\n\nExample: \"Customer support AI agent for Acme Corp — automatically triage and respond to support tickets.\""
-  header: "Round 0 — Project"
-  options:
-    - label: "Not available"
-  multiSelect: false
-
-Record the answer as `project_context`.
+Record the answer. Extract `company_name`, `company_website`, `sector`, and `size`. If "Use placeholders" is selected, use: company: "Acme Corp", website: "acme.com", sector: "unknown", size: "unknown".
 
 ### Step 4: Initialise state via CLI
+
+Construct the seed to include the basic facts collected in Step 3:
+
+**Company-level seed format:**
+```
+[company_name] ([sector], [size]) — AI adoption assessment
+```
+
+**Project-level seed format:**
+```
+[company_name] ([sector], [size]) — [project_context]
+```
 
 Run via Bash:
 ```
@@ -202,8 +185,12 @@ Display:
 INTERVIEW INITIALISED
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+  company:   [company_name]
+  website:   [company_website]
+  sector:    [sector]
+  size:      [size]
   track:     [company | project]
-  seed:      [first 80 chars of seed]...
+  seed:      [seed]
   depth:     [depth] ([maxRounds] rounds max)
   session:   [sessionId]
   state:     ~/.agentic-readiness/state/[sessionId].json
