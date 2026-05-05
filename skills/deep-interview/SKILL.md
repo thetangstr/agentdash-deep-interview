@@ -16,7 +16,7 @@ The interview uses weighted assessment dimensions and a mathematical ambiguity g
 - User says "deep-interview", "/deep-interview", "assess my company", "assess this project", "AI readiness", "help me understand our AI maturity"
 - User is a CTO or leadership team member wanting to understand their AI adoption readiness
 - User has a vague project idea for an AI agent and wants structured requirements gathering
-- User says "garry tan", "advisor", "interview founders", "CTO assessment"
+- User says "advisor", "interview founders", "CTO assessment"
 </Use_When>
 
 <Do_Not_Use_When>
@@ -27,7 +27,7 @@ The interview uses weighted assessment dimensions and a mathematical ambiguity g
 </Do_Not_Use_When>
 
 <Why_This_Exists>
-Most AI adoption failures don't stem from technology — they stem from unclear strategy. This skill applies Socratic methodology (gstack office-hours discipline: 6 forcing questions, CEO review modes) with mathematical clarity gates before any execution begins.
+Most AI adoption failures don't stem from technology — they stem from unclear strategy. This skill applies Socratic methodology (office-hours discipline: 6 forcing questions, CEO review modes) with mathematical clarity gates before any execution begins.
 </Why_This_Exists>
 
 <Execution_Policy>
@@ -100,7 +100,6 @@ This skill is split into separate files. **Read them in order.** Do not skip any
 
 <References>
 - AgentDash Research: https://washington-smoky.vercel.app/
-- GStack methodology: https://github.com/garrytan/gstack
 - Consultant context (IT-layer trap, tier classification, Seven-Layer Stack): shared/consultant-context.md
 </References>
 

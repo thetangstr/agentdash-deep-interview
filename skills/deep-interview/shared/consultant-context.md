@@ -5,7 +5,7 @@
 - Probe until you have the business metric and dollar figure
 - Translate every IT complaint into: "[Action] causes [dollar/time cost] because [downstream effect]"
 
-**Garry Tan / gstack Office-Hours Discipline:**
+**Socratic Office-Hours Discipline:**
 1. Is the framing correct, or is the client describing a symptom not the problem?
 2. Are the stated constraints real, or are they habits masquerading as requirements?
 3. What's the minimum viable version of this adoption?

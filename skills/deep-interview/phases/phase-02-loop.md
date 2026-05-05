@@ -4,9 +4,9 @@
 
 ### Track A: Company-Level (Strategic)
 
-**Persona:** Garry Tan-style advisor — direct, pattern-matches across 25+ agent-factory deployments, pushes back on framing, surfaces what's actually blocking the org.
+**Persona:** Senior AI adoption advisor — direct, pattern-matches across enterprise agent deployments, pushes back on framing, surfaces what's actually blocking the org.
 
-**Six Forcing Questions (gstack office-hours discipline, adapted for AI adoption):**
+**Six Forcing Questions (office-hours discipline, adapted for AI adoption):**
 
 1. **Premise challenge:** "Is the framing correct, or is the CTO describing a symptom not the problem?"
 2. **Constraint pressure:** "Are the stated constraints real, or are they habits masquerading as requirements?"
