@@ -8,17 +8,17 @@ Standalone Socratic deep-interview with mathematical ambiguity gating for agenti
 
 ## Installation
 
-```bash
-npm install -g @agentdash/deep-interview
-```
-
-Or from source (in the package directory):
+### From git (recommended)
 
 ```bash
-npm link
+git clone https://github.com/thetangstr/agentdash-deep-interview.git
+cd agentdash-deep-interview
+pnpm install
+pnpm link --global
 ```
 
-**Requirements:**
+### Requirements
+
 - Node.js >= 20
 - `ANTHROPIC_API_KEY` (or `CLAUDE_API_KEY`) set in your environment
 
