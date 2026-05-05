@@ -50,19 +50,45 @@ Company-level assessments surface the gap between ambition and operational readi
 
 ## Phase 1: Track Detection + Intake
 
-### Step 0: Set expectations
+**MANDATORY SEQUENCE — complete each step in order, no skipping:**
 
-Before we start, here's what you'll get at the end:
+---
+
+### STEP 1: What You Get (must complete first)
+
+Display this block verbatim:
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+BEFORE WE START
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Here's what you'll get when we're done:
+
+• **Markdown report** — saved to `./specs/deep-interview-[slug].md` on your machine
+• **DOCX report** — Word document version, ready to share with your team
+
+Both include: AI readiness score, dimension breakdown, tier recommendation, strategic roadmap (company-level) or project charter (project-level), and next steps.
+
+All files stay on your machine — nothing is uploaded or shared.
+Every interview starts fresh — no carry-over from previous sessions.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Then ask:
 
 AskUserQuestion
-  question: "Here's what you get when we're done:\n\n**1. Markdown report** — saved to `./specs/deep-interview-[slug].md` on your machine\n\n**2. DOCX report** — Word document version of the same assessment, ready to share with your team\n\nBoth contain your AI readiness score, dimension breakdown, tier recommendation, strategic roadmap (company-level) or project charter (project-level), and recommended next steps.\n\nAll files stay on your machine — nothing is uploaded or shared.\n\nNote: Every interview starts fresh. We will not carry over anything from previous sessions. Ready to begin?"
-  header: "What You Get"
+  question: "Ready to begin?"
+  header: "Begin"
   options:
     - label: "Let's begin"
     - label: "I have questions first"
   multiSelect: false
 
-If "I have questions first" is selected, answer their questions, then repeat this step until they select "Let's begin".
+If "I have questions first" — answer their questions, then ask again until they say "Let's begin".
+
+---
+
+### STEP 2: Assessment Track
 
 Extract from `{{ARGUMENTS}}` if the user specified it. Look for keywords:
 
@@ -87,7 +113,7 @@ AskUserQuestion
 
 Record the selected track as `assessment_track`.
 
-### Step 1b: Collect basic facts (MANDATORY — do not skip)
+### STEP 3: Basic Facts — Company (MANDATORY, do not skip)
 
 This step is mandatory. Do not proceed to Motivation until basic facts are collected. Ask in this exact order:
 
@@ -160,7 +186,7 @@ AskUserQuestion
 
 Record as `size`. If placeholder selected, use: "unknown".
 
-### Step 2: Collect primary motivation
+### STEP 4: Motivation
 
 AskUserQuestion
   question: "What's driving the interest in AI agents right now?\n\nThis helps me tailor the interview to your actual business concern."
@@ -182,7 +208,7 @@ AskUserQuestion
 
 Record the selected motivation as `primary_motivation`.
 
-### Step 2b: Collect depth
+### STEP 5: Interview Depth
 
 Then ask about interview depth:
 
@@ -200,7 +226,7 @@ AskUserQuestion
 
 Record the selected depth label (quick | standard | deep). Default to "standard".
 
-### Step 3: Collect project description
+### STEP 6: Project Type + Description
 
 AskUserQuestion
   question: "What best describes the AI agent you want to build or assess?"
@@ -231,7 +257,7 @@ AskUserQuestion
 
 Record the answer as `project_description`. If "Skip" is selected, use "To be defined in interview".
 
-### Step 4: Initialise state via CLI
+### STEP 7: Initialize Session via CLI
 
 Construct the seed to include motivation and project description:
 
