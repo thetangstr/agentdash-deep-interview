@@ -97,6 +97,10 @@ STATUS
 ONT
   deep-interview ont [session-id]
 
+TRANSCRIPT
+  deep-interview transcript [--session-id <id>] [--output-dir <path>]
+  # Exports raw Q&A as markdown + JSON for evaluation and research
+
 CRYSTAL
   deep-interview crystal [--output-dir <path>]
 
@@ -137,6 +141,7 @@ async function main(argv) {
     case 'status':     await cmdStatus(args); break;
     case 'ont':
     case 'ontology':   await cmdOntology(args); break;
+    case 'transcript': await cmdTranscript(args); break;
     case 'crystal':
     case 'crystallize': await cmdCrystallize(args); break;
     case 'present':    await cmdPresent(args); break;
@@ -426,12 +431,41 @@ async function cmdOntology(args) {
 }
 
 /**
+ * transcript command — export raw Q&A as markdown + JSON transcript.
+ */
+async function cmdTranscript(args) {
+  const { loadSession, loadLatestSession } = await import('./state.js');
+  const { writeTranscript, transcriptPath, transcriptJsonPath } = await import('./output.js');
+  const { mkdirSync } = await import('fs');
+  const path = await import('path');
+
+  const sessionId = args['session-id'] || null;
+  const state = sessionId ? loadSession(sessionId) : loadLatestSession();
+
+  if (!state) {
+    console.error('No session found.');
+    process.exit(1);
+  }
+
+  const outputDir = args['output-dir'] || './specs';
+  mkdirSync(path.resolve(outputDir), { recursive: true });
+
+  writeTranscript(state, outputDir);
+
+  console.log(`${LOGO}\n`);
+  console.log(`Transcript written to ${outputDir}/:`);
+  console.log(`  deep-interview-${state.slug}-transcript.md   — raw Q&A (markdown)`);
+  console.log(`  deep-interview-${state.slug}-transcript.json — raw Q&A (JSON)`);
+  console.log(`\nRounds: ${state.round} | Ambiguity: ${(state.ambiguity ?? 1).toFixed(3)}`);
+}
+
+/**
  * crystal / crystallize command — generate and write the spec.
  */
 async function cmdCrystallize(args) {
   const { loadSession, loadLatestSession, finishSession } = await import('./state.js');
   const { crystallise } = await import('./spec.js');
-  const { specPath } = await import('./output.js');
+  const { specPath, writeTranscript } = await import('./output.js');
   const { ensureDir } = await import('./output.js');
   const { writeFileSync, mkdirSync, readFileSync, existsSync } = await import('fs');
   const path = await import('path');
@@ -477,10 +511,18 @@ async function cmdCrystallize(args) {
   const reason = state.ambiguity <= threshold ? 'threshold-met' : 'round-cap';
   finishSession(state, reason, spec);
 
+  // Write raw Q&A transcript alongside the spec
+  writeTranscript(state, outputDir);
+  const { transcriptPath, transcriptJsonPath } = await import('./output.js');
+  const mdTranscript = transcriptPath(outputDir, state.slug);
+  const jsonTranscript = transcriptJsonPath(outputDir, state.slug);
+
   const verdict = state.ambiguity <= threshold ? 'GO' : 'CONDITIONAL';
   console.log(`\
-Spec crystallised and written to:
-  ${filePath}
+Spec and transcript written to ${outputDir}/:
+  deep-interview-${state.slug}.md          — crystallised assessment
+  deep-interview-${state.slug}-transcript.md   — raw Q&A (markdown)
+  deep-interview-${state.slug}-transcript.json — raw Q&A (JSON)
   ambiguity: ${state.ambiguity.toFixed(3)} → ${verdict}
   exit reason: ${reason}
 
