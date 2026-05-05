@@ -73,23 +73,27 @@ AskUserQuestion
 
 Record the selected track as `assessment_track`.
 
-### Step 2: Collect seed
-
-If `{{ARGUMENTS}}` includes a seed, use it. Otherwise ask:
+### Step 2: Collect primary motivation
 
 AskUserQuestion
-  question: "**[Company-level]** What's the company, who are we assessing, and what is the primary AI adoption question?\n\n**[Project-level]** Describe the project or idea you want to assess. One or two sentences is fine — we are here to sharpen it."
-  header: "Seed"
+  question: "What's driving the interest in AI agents right now?\n\nThis helps me tailor the interview to your actual business concern."
+  header: "Motivation"
   options:
-    - label: "I'll describe it now"
-      description: "Use the free-text field to describe your project or goal"
-    - label: "Use placeholder"
-      description: "We'll use a generic placeholder for now"
-    - label: "Skip for now"
-      description: "We'll explore this together in the interview"
+    - label: "Cut costs / do more with less"
+      description: "Automate repetitive, high-volume work — reduce headcount needs or operating costs"
+    - label: "Move faster"
+      description: "24/7 availability, instant response, no human bottlenecks"
+    - label: "Scale without hiring"
+      description: "Handle 10x volume without proportionally more headcount"
+    - label: "Improve customer experience"
+      description: "Faster, more personalized, consistent support around the clock"
+    - label: "Free up senior talent"
+      description: "Let senior people focus on judgment calls, not repetitive tasks"
+    - label: "All of the above"
+      description: "Covering multiple angles at once"
   multiSelect: false
 
-Record the free-text as `seed`. If "Use placeholder" or "Skip for now" is selected, use "AI adoption assessment" as the placeholder seed.
+Record the selected motivation as `primary_motivation`.
 
 ### Step 2b: Collect depth
 
@@ -109,44 +113,75 @@ AskUserQuestion
 
 Record the selected depth label (quick | standard | deep). Default to "standard".
 
-### Step 3: Collect basic facts (before CLI)
-
-Before running `deep-interview init`, collect the company/project facts via AskUserQuestion. This information seeds the CLI session.
+### Step 3: Collect project description
 
 AskUserQuestion
-  question: "Let's get started. Here are the basics I need:\n\n1. **Company name + website**\n2. **Industry / sector**\n3. **Approximate size** (employees or revenue)\n\nExample: \"Acme Corp — acme.com, Manufacturing, 500 employees\""
-  header: "Basic Facts"
+  question: "What best describes the AI agent you want to build or assess?"
+  header: "Project Type"
   options:
-    - label: "I have the details ready"
-      description: "Use the free-text field to provide company name, website, sector, and size"
-    - label: "Use placeholders"
-      description: "Use generic placeholders — we'll fill in specifics during the interview"
+    - label: "Customer-facing agent"
+      description: "Support, sales, onboarding — interacts directly with customers or prospects"
+    - label: "Internal operations agent"
+      description: "HR, IT, finance, legal — automates internal workflows and approvals"
+    - label: "Data & research agent"
+      description: "Analysis, reporting, market research — extracts and synthesizes information"
+    - label: "Developer / code agent"
+      description: "Code review, testing, DevOps — assists engineering teams"
+    - label: "All of the above / Not sure yet"
+      description: "Broad adoption — we'll narrow it down in the interview"
   multiSelect: false
 
-**If "I have the details ready":** immediately follow with a second AskUserQuestion (no LLM call — just presents the free-text input):
+Record the selected project type as `project_type`.
+
+**Then immediately** follow with a second AskUserQuestion (no LLM call — presents the free-text input):
 
 AskUserQuestion
-  question: "Please provide:\n1. Company name + website\n2. Industry / sector\n3. Approximate size (employees or revenue)\n\nExample: \"Acme Corp — acme.com, Manufacturing, 500 employees\""
+  question: "Describe the specific agent or workflow you have in mind.\n\nExample: \"An AI agent that reads Salesforce leads, drafts personalised outreach emails, and schedules them in Google Calendar for review before sending.\""
+  header: "Project Description"
+  options:
+    - label: "Skip / we'll define it in the interview"
+  multiSelect: false
+
+Record the answer as `project_description`. If "Skip" is selected, use "To be defined in interview".
+
+### Step 4: Collect basic facts
+
+AskUserQuestion
+  question: "What is the company name, website, industry/sector, and approximate size?\n\nExample: \"Acme Corp — acme.com, Manufacturing, 500 employees\""
+  header: "Basic Facts"
+  options:
+    - label: "I have the details"
+      description: "I'll type them in the next step"
+    - label: "Use placeholders"
+      description: "Use \"Acme Corp / acme.com / unknown / unknown\""
+  multiSelect: false
+
+**If "I have the details":** immediately follow with a second AskUserQuestion:
+
+AskUserQuestion
+  question: "Please provide company name, website, industry/sector, and size.\n\nExample: \"Acme Corp — acme.com, Manufacturing, 500 employees\""
   header: "Basic Facts"
   options:
     - label: "Use placeholders instead"
   multiSelect: false
 
-Record the answer. Extract `company_name`, `company_website`, `sector`, and `size`. If "Use placeholders" is selected, use: company: "Acme Corp", website: "acme.com", sector: "unknown", size: "unknown".
+Record the answer. Extract `company_name`, `company_website`, `sector`, `size`. If "Use placeholders" or "Use placeholders instead" is selected, use: company: "Acme Corp", website: "acme.com", sector: "unknown", size: "unknown".
 
-### Step 4: Initialise state via CLI
+### Step 5: Initialise state via CLI
 
-Construct the seed to include the basic facts collected in Step 3:
+Construct the seed to include motivation and project description:
 
-**Company-level seed format:**
+**Seed format:**
 ```
-[company_name] ([sector], [size]) — AI adoption assessment
+[motivation] | [project_type] | [project_description] | Company: [company_name] ([sector], [size])
 ```
 
-**Project-level seed format:**
+Example:
 ```
-[company_name] ([sector], [size]) — [project_context]
+Cut costs | Internal ops agent | AI agent that auto-processes expense reports and routes approvals | Acme Corp (Manufacturing, 500 employees)
 ```
+
+Run via Bash:
 
 Run via Bash:
 ```
@@ -185,12 +220,14 @@ Display:
 INTERVIEW INITIALISED
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+  motivation: [primary_motivation]
+  project:    [project_type]
+  description: [project_description]
   company:   [company_name]
   website:   [company_website]
   sector:    [sector]
   size:      [size]
   track:     [company | project]
-  seed:      [seed]
   depth:     [depth] ([maxRounds] rounds max)
   session:   [sessionId]
   state:     ~/.agentic-readiness/state/[sessionId].json
