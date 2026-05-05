@@ -227,32 +227,40 @@ AskUserQuestion
 If CLI is ready, run init. Parse the session ID.
 
 Display:
-```
+Confirm all collected values with the user before starting the Socratic rounds. Display the actual recorded values — not template placeholders:
+
+Display:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-INTERVIEW INITIALISED
+INTERVIEW READY — please confirm
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  motivation: [primary_motivation]
-  project:    [project_type]
-  description: [project_description]
-  company:   [company_name]
-  website:   [company_website]
-  sector:    [sector]
-  size:      [size]
-  track:     [company | project]
-  depth:     [depth] ([maxRounds] rounds max)
-  session:   [sessionId]
-  state:     ~/.agentic-readiness/state/[sessionId].json
-  spec out:  ./specs/deep-interview-[slug].md
+  Motivation:     [actual primary_motivation value]
+  Project type:  [actual project_type value]
+  Description:   [actual project_description — first 80 chars]
+  Company:       [actual company_name]
+  Website:       [actual company_website]
+  Sector:        [actual sector]
+  Size:          [actual size]
+  Track:         [company | project]
+  Depth:         [depth] ([maxRounds] rounds max)
+  Session ID:    [sessionId from CLI init]
 
-Proceed to Phase 2.
-```
+AskUserQuestion
+  question: "Everything look right? We can adjust before we start the interview rounds."
+  header: "Confirm Details"
+  options:
+    - label: "Looks good — start the interview"
+    - label: "Update something"
+      description: "Tell me what to change"
+  multiSelect: false
+
+**If "Update something":** ask which value needs correcting, update the record, re-display the confirmation block, and ask again until confirmed.
 
 ---
 
 ## Phase 2: Interview Loop
 
-**Prerequisite:** Phase 1 complete with sessionId confirmed.
+**Prerequisite:** Phase 1 complete AND confirmation gate above passed — the user has confirmed all intake values before the first round question is asked.
 
 Two distinct question tracks — the CLI generates questions appropriate to the track. Both tracks share the same round loop, ambiguity scoring, and challenge agents.
 
@@ -351,15 +359,15 @@ Parse the JSON output. Extract:
 - `challengeAgent` — which challenge agent fired (if any)
 - `ambiguity` — current ambiguity score
 
-Display:
+Display (substitute the actual parsed values from the JSON output):
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-ROUND [round] / [maxRounds] — [dimension] / [track]
+ROUND [round number from JSON] / [maxRounds from JSON] — [dimension from JSON] / [track from JSON]
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-${challengeAgent ? `[Challenge agent: ${challengeAgent}]` : ''}
-Why we're asking: [whyContext]
-Current ambiguity: [ambiguity]
+[If challengeAgent is set in JSON, show: `[Challenge agent: ${value}]`]
+Why we're asking: [whyContext field from JSON]
+Current ambiguity: [ambiguity field from JSON]
 
-[question]
+[question field from JSON]
 
 AskUserQuestion
   question: "[question]"
