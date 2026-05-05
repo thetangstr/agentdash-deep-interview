@@ -80,9 +80,16 @@ If `{{ARGUMENTS}}` includes a seed, use it. Otherwise ask:
 AskUserQuestion
   question: "**[Company-level]** What's the company, who are we assessing, and what is the primary AI adoption question?\n\n**[Project-level]** Describe the project or idea you want to assess. One or two sentences is fine — we are here to sharpen it."
   header: "Seed"
+  options:
+    - label: "I'll describe it now"
+      description: "Use the free-text field to describe your project or goal"
+    - label: "Use placeholder"
+      description: "We'll use a generic placeholder for now"
+    - label: "Skip for now"
+      description: "We'll explore this together in the interview"
   multiSelect: false
 
-Record the free-text description as `seed`. If the answer is empty, use the placeholder "AI adoption assessment".
+Record the free-text as `seed`. If "Use placeholder" or "Skip for now" is selected, use "AI adoption assessment" as the placeholder seed.
 
 ### Step 2b: Collect depth
 
@@ -104,25 +111,57 @@ Record the selected depth label (quick | standard | deep). Default to "standard"
 
 ### Step 3: Round 0 — Collect company/project context
 
-Before running `deep-interview init`, collect basic intake information in Round 0. Ask free-text — no options.
+Before running `deep-interview init`, collect basic intake information in Round 0. Use two-step for fact collection: intent question first, then immediate free-text follow-on.
 
 **Company-level — ask for company name and website:**
 
 AskUserQuestion
-  question: "**[Company-level]** What is the company's name and website?\n\nPlease provide the company name and URL (e.g. \"Acme Corp — acme.com\")."
+  question: "**[Company-level]** Do you have the company's name and website ready?"
   header: "Round 0 — Company"
+  options:
+    - label: "I have it ready"
+      description: "I'll type it in the next step"
+    - label: "Not available"
+      description: "I don't have this right now"
+    - label: "Use placeholder"
+      description: "Use \"Acme Corp / acme.com\" as a placeholder"
   multiSelect: false
 
-Record the free-text answer as `company_name` and `company_website`. If empty, use placeholders ("Acme Corp" / "acme.com").
+**If "I have it ready":** immediately follow with a second AskUserQuestion:
+
+AskUserQuestion
+  question: "What is the company's name and website?\n\nPlease provide company name and URL (e.g. \"Acme Corp — acme.com\")."
+  header: "Round 0 — Company"
+  options:
+    - label: "Not available"
+  multiSelect: false
+
+Record the answer as `company_name` and `company_website`.
 
 **Project-level — ask for project context:**
 
 AskUserQuestion
-  question: "**[Project-level]** What is the project name, the company or team running it, and the primary goal in one sentence?\n\nExample: \"Customer support AI agent for Acme Corp — automatically triage and respond to support tickets.\""
+  question: "**[Project-level]** Do you have the project name, company/team, and primary goal ready?"
   header: "Round 0 — Project"
+  options:
+    - label: "I have it ready"
+      description: "I'll type it in the next step"
+    - label: "Not available"
+      description: "I don't have this right now"
+    - label: "Use placeholder"
+      description: "Use a generic placeholder"
   multiSelect: false
 
-Record the answer as `project_context`. If empty, use a placeholder.
+**If "I have it ready":** immediately follow with a second AskUserQuestion:
+
+AskUserQuestion
+  question: "What is the project name, the company or team, and the primary goal in one sentence?\n\nExample: \"Customer support AI agent for Acme Corp — automatically triage and respond to support tickets.\""
+  header: "Round 0 — Project"
+  options:
+    - label: "Not available"
+  multiSelect: false
+
+Record the answer as `project_context`.
 
 ### Step 4: Initialise state via CLI
 
