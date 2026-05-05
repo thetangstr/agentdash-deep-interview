@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# deep-interview CLI entry point
+# Resolves to the package's src/cli.js regardless of working directory
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+exec node "$SCRIPT_DIR/../src/cli.js" "$@"

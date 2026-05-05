@@ -1,0 +1,43 @@
+{
+  "name": "@agentdash/deep-interview",
+  "version": "1.0.0",
+  "description": "Standalone Socratic deep-interview with mathematical ambiguity gating for agentic workflow spec crystallisation",
+  "type": "module",
+  "bin": {
+    "deep-interview": "./bin/deep-interview"
+  },
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./score": "./src/score.js",
+    "./question": "./src/question.js",
+    "./spec": "./src/spec.js",
+    "./state": "./src/state.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.40.0",
+    "uuid": "^11.0.0"
+  },
+  "devDependencies": {},
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "deep-interview",
+    "socratic",
+    "agentic-workflow",
+    "requirements-crystallisation",
+    "spec-generation",
+    "anthropic",
+    "claude"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/thetangstr/agentdash-deep-interview.git"
+  },
+  "scripts": {
+    "test": "echo \"No tests yet\" && exit 0",
+    "lint": "echo \"No linter configured\" && exit 0"
+  }
+}
