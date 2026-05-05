@@ -465,9 +465,10 @@ async function cmdTranscript(args) {
 async function cmdCrystallize(args) {
   const { loadSession, loadLatestSession, finishSession } = await import('./state.js');
   const { crystallise } = await import('./spec.js');
+  const { runResearch, loadResearch } = await import('./research.js');
   const { specPath, writeTranscript } = await import('./output.js');
   const { ensureDir } = await import('./output.js');
-  const { writeFileSync, mkdirSync, readFileSync, existsSync } = await import('fs');
+  const { writeFileSync, mkdirSync } = await import('fs');
   const path = await import('path');
 
   const sessionId = args['session-id'] || null;
@@ -484,25 +485,21 @@ async function cmdCrystallize(args) {
   // Ensure output dir
   mkdirSync(path.resolve(outputDir), { recursive: true });
 
-  // Load research context if available (written by last30days research step)
+  // Auto-run last30days research before crystallising
+  console.log(`${LOGO}\n`);
   let researchContext = null;
-  const researchPath = path.resolve(
-    process.env.HOME || '',
-    '.agentic-readiness',
-    'research',
-    `${state.sessionId}.md`
-  );
-  if (existsSync(researchPath)) {
+  if (state.track === 'company' || args.research !== 'false') {
+    console.log('\nRunning competitive research (last30days)...');
     try {
-      researchContext = readFileSync(researchPath, 'utf8');
-      console.log('Research context loaded from:', researchPath);
-    } catch {
-      // ignore — research is optional
+      await runResearch(state);
+      researchContext = loadResearch(state.sessionId);
+    } catch (err) {
+      console.error('Research step failed:', err.message);
+      console.error('Crystallising without research context.');
     }
   }
 
-  console.log(`${LOGO}\n`);
-  console.log('Crystallising spec...');
+  console.log('\nCrystallising spec...');
   const spec = await crystallise(state, researchContext);
 
   writeFileSync(filePath, spec, 'utf8');
