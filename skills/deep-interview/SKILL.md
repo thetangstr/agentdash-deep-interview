@@ -33,6 +33,8 @@ Company-level assessments surface the gap between ambition and operational readi
 </Why_This_Exists>
 
 <Execution_Policy>
+- **Every interview is a NEW session** — do not carry over, reference, or resume from any prior interview state. Start fresh with a clean slate.
+- If a prior session exists on disk, ignore it unless the user explicitly asks to resume a specific session.
 - Phase 1: Detect track (company vs project) from `{{ARGUMENTS}}` or ask upfront
 - Phase 2: Initialise session via `deep-interview init --seed "..." --depth [depth] --track [company|project]`
 - Phase 3: Loop — generate question, ask via AskUserQuestion, record answer, score via CLI
@@ -53,7 +55,7 @@ Company-level assessments surface the gap between ambition and operational readi
 Before we start, here's what you'll get at the end:
 
 AskUserQuestion
-  question: "Here's what you get when we're done:\n\n**1. Markdown report** — saved to `./specs/deep-interview-[slug].md` on your machine\n\n**2. DOCX report** — Word document version of the same assessment, ready to share with your team\n\nBoth contain your AI readiness score, dimension breakdown, tier recommendation, strategic roadmap (company-level) or project charter (project-level), and recommended next steps.\n\nAll files stay on your machine — nothing is uploaded or shared. Ready to begin?"
+  question: "Here's what you get when we're done:\n\n**1. Markdown report** — saved to `./specs/deep-interview-[slug].md` on your machine\n\n**2. DOCX report** — Word document version of the same assessment, ready to share with your team\n\nBoth contain your AI readiness score, dimension breakdown, tier recommendation, strategic roadmap (company-level) or project charter (project-level), and recommended next steps.\n\nAll files stay on your machine — nothing is uploaded or shared.\n\nNote: Every interview starts fresh. We will not carry over anything from previous sessions. Ready to begin?"
   header: "What You Get"
   options:
     - label: "Let's begin"
