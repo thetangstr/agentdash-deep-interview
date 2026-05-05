@@ -499,7 +499,13 @@ async function cmdCrystallize(args) {
     }
   }
 
-  console.log('\nCrystallising spec...');
+  // Build the spec using an autonomous agent (Claude via the spec crystalliser)
+  console.log(`\
+\n${BOLD}Creating your spec...${RESET}
+  We have everything we need: interview answers, dimension scores, and
+  market research. Now we synthesize it into a concrete action plan —
+  then hand it off to an autonomous agent (AgentDash) to start building.
+`);
   const spec = await crystallise(state, researchContext);
 
   writeFileSync(filePath, spec, 'utf8');
