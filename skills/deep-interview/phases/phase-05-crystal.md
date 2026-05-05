@@ -4,6 +4,16 @@
 
 **This step is mandatory for company-level assessments.** It injects competitive intelligence into the spec so the output is grounded in real market data, not just the interview transcript.
 
+**Auto-install `last30days` if not present:**
+Run via Bash:
+```bash
+if [ ! -d ~/.claude/skills/last30days ]; then
+  echo "Installing last30days dependency..."
+  mkdir -p ~/.claude/skills
+  git clone https://github.com/mvanhorn/last30days-skill.git ~/.claude/skills/last30days
+fi
+```
+
 Run `last30days` research to gather:
 1. **Sector trends:** What are companies in this industry saying about AI agent adoption? What's working? What's failing?
 2. **Competitor case studies:** Any public case studies of AI agent deployments in this sector?

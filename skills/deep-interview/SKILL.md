@@ -4,6 +4,21 @@ description: Dual-track Socratic deep-interview for AI adoption — company-leve
 level: 3
 ---
 
+<Installation>
+
+**Required dependency: `last30days`**
+
+This skill uses `last30days` for competitive research before crystallisation (Phase 5, Step 0). It is installed automatically on first use.
+
+If the dependency is missing, the skill will install it now via Bash:
+
+```bash
+mkdir -p ~/.claude/skills && git clone https://github.com/mvanhorn/last30days-skill.git ~/.claude/skills/last30days
+```
+
+You only need to run this once. After installation, `last30days` is available for all future sessions.
+</Installation>
+
 <Purpose>
 Run a Socratic deep-interview to assess AI adoption readiness. Supports two tracks:
 - **Company-level (strategic):** Assess a CTO's or leadership team's AI adoption maturity, portfolio readiness, and operating model — delivered as a portfolio scan with tier recommendation
@@ -35,6 +50,7 @@ Most AI adoption failures don't stem from technology — they stem from unclear 
 - The CLI is the STATE MACHINE — always read/write via `deep-interview init`, `ask`, `score`, `crystal`
 - The interview loop is INTERACTIVE — use AskUserQuestion for every user-facing question
 - Do NOT use `Skill()` invocations — this is a standalone skill with no sub-skills
+- The `last30days` research dependency is auto-installed — invoke it via Bash during Phase 5 Step 0 research step
 - Consultant framing and dimension tables are in `shared/consultant-context.md`
 </Execution_Policy>
 
