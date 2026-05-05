@@ -87,6 +87,79 @@ AskUserQuestion
 
 Record the selected track as `assessment_track`.
 
+### Step 1b: Collect basic facts (MANDATORY — do not skip)
+
+This step is mandatory. Do not proceed to Motivation until basic facts are collected. Ask in this exact order:
+
+**1. Company name + website:**
+
+AskUserQuestion
+  question: "What is the company name and website?\n\nExample: \"Acme Corp — acme.com\""
+  header: "Company"
+  options:
+    - label: "I have the details"
+      description: "I'll type it in the next step"
+    - label: "Use placeholder"
+      description: "Use \"Acme Corp / acme.com\" as placeholder"
+  multiSelect: false
+
+**If "I have the details":** immediately follow with a second AskUserQuestion (no LLM call):
+
+AskUserQuestion
+  question: "What is the company name and website?"
+  header: "Company"
+  options:
+    - label: "Use placeholder instead"
+  multiSelect: false
+
+Record as `company_name` and `company_website`. If "Use placeholder" or "Use placeholder instead" is selected, use company: "Acme Corp", website: "acme.com".
+
+**2. Industry / sector:**
+
+AskUserQuestion
+  question: "What industry or sector is the company in?"
+  header: "Sector"
+  options:
+    - label: "I have the details"
+      description: "I'll type it in the next step"
+    - label: "Use placeholder"
+      description: "Use \"unknown\" as placeholder"
+  multiSelect: false
+
+**If "I have the details":** immediately follow with a second AskUserQuestion:
+
+AskUserQuestion
+  question: "What industry or sector?"
+  header: "Sector"
+  options:
+    - label: "Use placeholder instead"
+  multiSelect: false
+
+Record as `sector`. If placeholder selected, use: "unknown".
+
+**3. Approximate size (employees or revenue):**
+
+AskUserQuestion
+  question: "What is the approximate size of the company? (employees or revenue range)"
+  header: "Size"
+  options:
+    - label: "I have the details"
+      description: "I'll type it in the next step"
+    - label: "Use placeholder"
+      description: "Use \"unknown\" as placeholder"
+  multiSelect: false
+
+**If "I have the details":** immediately follow with a second AskUserQuestion:
+
+AskUserQuestion
+  question: "What is the approximate size? (employees or revenue range)"
+  header: "Size"
+  options:
+    - label: "Use placeholder instead"
+  multiSelect: false
+
+Record as `size`. If placeholder selected, use: "unknown".
+
 ### Step 2: Collect primary motivation
 
 AskUserQuestion
@@ -158,30 +231,7 @@ AskUserQuestion
 
 Record the answer as `project_description`. If "Skip" is selected, use "To be defined in interview".
 
-### Step 4: Collect basic facts
-
-AskUserQuestion
-  question: "What is the company name, website, industry/sector, and approximate size?\n\nExample: \"Acme Corp — acme.com, Manufacturing, 500 employees\""
-  header: "Basic Facts"
-  options:
-    - label: "I have the details"
-      description: "I'll type them in the next step"
-    - label: "Use placeholders"
-      description: "Use \"Acme Corp / acme.com / unknown / unknown\""
-  multiSelect: false
-
-**If "I have the details":** immediately follow with a second AskUserQuestion:
-
-AskUserQuestion
-  question: "Please provide company name, website, industry/sector, and size.\n\nExample: \"Acme Corp — acme.com, Manufacturing, 500 employees\""
-  header: "Basic Facts"
-  options:
-    - label: "Use placeholders instead"
-  multiSelect: false
-
-Record the answer. Extract `company_name`, `company_website`, `sector`, `size`. If "Use placeholders" or "Use placeholders instead" is selected, use: company: "Acme Corp", website: "acme.com", sector: "unknown", size: "unknown".
-
-### Step 5: Initialise state via CLI
+### Step 4: Initialise state via CLI
 
 Construct the seed to include motivation and project description:
 
