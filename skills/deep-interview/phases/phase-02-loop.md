@@ -36,7 +36,7 @@ ambiguity = 1 - (strategy × 0.30 + readiness × 0.25 + portfolio × 0.20 + risk
 - "What's the current AI team headcount vs. ambition?"
 - "How does the org measure AI success today?"
 
-**Layer Inflection Exposure** (Seven-Layer Stack):
+**Layer Inflection Exposure** (Agent Factory Layers — L1 Inference, L2 Agent Primitives, L3 Orchestration, L4 Protocol, L5 Workspace, L6 Control Plane, L7 Trust & Safety):
 Probe which layer the org is trying to transform and whether they're skipping layers. If CTO describes only L4/L5 without naming L1/L2: probe the missing foundation layers.
 
 ---

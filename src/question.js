@@ -96,7 +96,7 @@ Never reveal which phase you are in. Never show scoring weights to the user.`;
 }
 
 function companySystemPrompt() {
-  return `You are a Garry Tan-style AI adoption advisor — direct, pattern-matches across
+  return `You are a Senior AI adoption advisor — direct, pattern-matches across
 hundreds of enterprise agent deployments, and push back hard on vague framing.
 
 You are a Senior Strategy Consultant at AgentDash Consulting conducting a COMPANY-LEVEL
@@ -261,6 +261,18 @@ export function buildQuestionPrompt({ seed, round, answers, dimensions, challeng
 }
 
 /**
+ * Find the first text block in a Claude API response content array.
+ * The response may contain thinking blocks before the text block.
+ */
+function getTextContent(result) {
+  if (!result.content) return '';
+  for (const block of result.content) {
+    if (block.type === 'text') return block.text || '';
+  }
+  return '';
+}
+
+/**
  * Call the Claude API to generate the next interview question.
  *
  * @param {object} options
@@ -276,9 +288,18 @@ export async function generateNextQuestion(options) {
   const { seed, round, answers, dimensions, challengeAgents = [], track = 'project' } = options;
 
   const Anthropic = (await import('@anthropic-ai/sdk')).default;
-  const apiKey = process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY;
+  // ANTHROPIC_AUTH_TOKEN is available in Claude Code runtime (OAuth session token)
+  const apiKey =
+    process.env.ANTHROPIC_API_KEY ||
+    process.env.CLAUDE_API_KEY ||
+    process.env.ANTHROPIC_AUTH_TOKEN ||
+    null;
   if (!apiKey) {
-    throw new Error('ANTHROPIC_API_KEY (or CLAUDE_API_KEY) is not set.');
+    throw new Error(
+      'ANTHROPIC_API_KEY (or CLAUDE_API_KEY or ANTHROPIC_AUTH_TOKEN) is not set.\n' +
+      '  Set it: export ANTHROPIC_API_KEY=sk-ant-...\n' +
+      '  Or run inside Claude Code which provides ANTHROPIC_AUTH_TOKEN automatically.'
+    );
   }
 
   const client = new Anthropic({ apiKey });
@@ -308,13 +329,22 @@ export async function generateNextQuestion(options) {
     }
   }
 
-  const raw = result.content[0]?.text || '';
-  const cleaned = raw.replace(/^```json\s*/i, '').replace(/\s*```$/i, '').trim();
+  const raw = getTextContent(result);
+  // Strip markdown code fences — model may wrap JSON in ```json ... ```
+  let cleaned = raw.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
 
   try {
     const parsed = JSON.parse(cleaned);
-    // Validate dimension is valid for this track
+    // Validate required fields are present and well-formed
     const valid = validDimensions(track);
+    const hasQuestion = typeof parsed.question === 'string' && parsed.question.trim().length > 0;
+    const hasOptions = Array.isArray(parsed.options) && parsed.options.length > 0;
+
+    // If parsed JSON but critical fields missing, treat as parse failure
+    if (!hasQuestion || !hasOptions) {
+      throw new Error('missing required fields');
+    }
+
     if (parsed.dimension && !valid.includes(parsed.dimension)) {
       parsed.dimension = valid[0]; // fallback to first dimension
     }

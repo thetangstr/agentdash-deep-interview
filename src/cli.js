@@ -80,6 +80,10 @@ ONT
 CRYSTAL
   deep-interview crystal [--output-dir <path>]
 
+PRESENT
+  deep-interview present [--session-id <id>] [--output-dir <path>]
+  deep-interview present --spec-path ./specs/deep-interview-xxx.md [--output-dir <path>]
+
 EXAMPLES
   # Company-level (strategic) assessment
   deep-interview init --seed "Acme Corp AI adoption readiness" --track company --depth deep
@@ -115,6 +119,7 @@ async function main(argv) {
     case 'ontology':   await cmdOntology(args); break;
     case 'crystal':
     case 'crystallize': await cmdCrystallize(args); break;
+    case 'present':    await cmdPresent(args); break;
     default:
       if (!command || command === 'help') {
         usage();
@@ -439,6 +444,29 @@ Spec crystallised and written to:
   ambiguity: ${state.ambiguity.toFixed(3)} → ${verdict}
   exit reason: ${reason}
 `);
+}
+
+/**
+ * present command — generate an HTML slideshow from a crystallised spec.
+ */
+async function cmdPresent(args) {
+  const { generatePresentation } = await import('./present.js');
+
+  const sessionId = args['session-id'] || null;
+  const specPath = args['spec-path'] || null;
+  const outputDir = args['output-dir'] || './specs';
+
+  console.log('Generating presentation...');
+  try {
+    const outputFile = await generatePresentation({ sessionId, specPath, outputDir });
+    console.log(`Presentation written to:
+  ${outputFile}
+
+Open in any browser. Use arrow keys or click to navigate.`);
+  } catch (err) {
+    console.error(`Error: ${err.message}`);
+    process.exit(1);
+  }
 }
 
 // Run

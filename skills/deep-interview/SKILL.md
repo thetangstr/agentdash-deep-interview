@@ -56,6 +56,7 @@ This skill is split into separate files. **Read them in order.** Do not skip any
 **Phase files** (in `phases/`):
 - `phases/phase-02-loop.md` — Interview rounds loop + Phase 3 + Phase 4
 - `phases/phase-05-crystal.md` — Crystallisation + Phase 6 session summary
+- `phases/phase-06-present.md` — HTML slideshow generation
 
 **Shared reference:**
 - `shared/consultant-context.md` — Consultant framing, IT-layer trap, tier classification, Seven-Layer Stack
@@ -77,6 +78,11 @@ This skill is split into separate files. **Read them in order.** Do not skip any
 
 **PHASE 3 — Crystallisation:**
 → Read and follow phases/phase-05-crystal.md
+
+**PHASE 4 — Presentation:**
+→ Read and follow phases/phase-06-present.md
+
+**Phase 5 — Session Summary** (inline in phase-05-crystal.md)
 
 </Steps>
 

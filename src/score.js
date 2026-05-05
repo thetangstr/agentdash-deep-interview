@@ -10,16 +10,31 @@ import Anthropic from '@anthropic-ai/sdk';
 
 let _client = null;
 
+/**
+ * Find the first text block in a Claude API response content array.
+ * The response may contain thinking blocks before the text block.
+ */
+function getTextContent(result) {
+  if (!result.content) return '';
+  for (const block of result.content) {
+    if (block.type === 'text') return block.text || '';
+  }
+  return '';
+}
+
 function getClient() {
   if (!_client) {
+    // ANTHROPIC_AUTH_TOKEN is available in Claude Code runtime (OAuth session token)
     const apiKey =
       process.env.ANTHROPIC_API_KEY ||
       process.env.CLAUDE_API_KEY ||
+      process.env.ANTHROPIC_AUTH_TOKEN ||
       null;
     if (!apiKey) {
       throw new Error(
-        'deep-interview: ANTHROPIC_API_KEY (or CLAUDE_API_KEY) is not set.\n' +
-        '  Set it in your environment:  export ANTHROPIC_API_KEY=sk-ant-...'
+        'deep-interview: ANTHROPIC_API_KEY (or CLAUDE_API_KEY or ANTHROPIC_AUTH_TOKEN) is not set.\n' +
+        '  Set it in your environment:  export ANTHROPIC_API_KEY=sk-ant-...\n' +
+        '  Or run inside Claude Code which provides ANTHROPIC_AUTH_TOKEN automatically.'
       );
     }
     _client = new Anthropic({ apiKey });
@@ -223,7 +238,7 @@ Track: ${track.toUpperCase()}`;
     }
   }
 
-  const raw = result.content[0]?.text || '';
+  const raw = getTextContent(result);
   const cleaned = raw.replace(/^```json\s*/i, '').replace(/\s*```$/i, '').trim();
 
   try {

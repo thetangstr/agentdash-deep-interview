@@ -81,8 +81,17 @@ SPEC STRUCTURE:
 ## Pilot Scope
 [What ships in the first 4 weeks. Named DRI. Specific success metric.]
 
-## Buy / Hybridize / Build (Seven-Layer Stack)
-[L1: buy · L2: buy (MCP) · L3: buy · L4: build · L5: build · L6: combine · L7: build]
+## Buy / Hybridize / Build (Agent Factory Layers)
+Apply the Agent Factory Layers framework. Commodity layers → buy. Differentiator → build.
+| Layer | Recommendation | Rationale |
+|-------|---------------|-----------|
+| L1 Inference | BUY | vLLM, Fireworks, Azure — commodity, no advantage building |
+| L2 Agent Primitives | BUY | LangChain/LangGraph — commodity tooling |
+| L3 Orchestration | BUY | Temporal or equivalent — standard infrastructure |
+| L4 Protocol (MCP) | BUY | MCP is the standard — build on it, don't reinvent |
+| L5 Workspace | BUILD | Your differentiation lives here — Cursor, internal tooling |
+| L6 Control Plane | BUILD | Governance is your moat — audit, cost attribution, policy |
+| L7 Trust & Safety | SKIP | Your model provider handles this — don't buy redundant tooling |
 
 ## Open Questions
 [Bullet list of what the customer must still answer before pilot kickoff]
@@ -124,38 +133,59 @@ SPEC STRUCTURE:
 [2-3 sentence executive summary. What's the overall AI adoption readiness verdict?
  What's the top recommendation?]
 
-## AI Maturity Score (1-5)
-[Score the company's overall AI adoption maturity across:
-- Data infrastructure readiness
-- AI/ML team capabilities
-- Executive sponsorship strength
-- Existing agent deployments
-- Change management capacity
-Provide a score 1-5 with brief justification.]
+## AI Adoption Maturity — Current State
+
+**Identified Level: [Level X — Name]**
+
+Use the Five-Level AI Adoption Maturity Model to classify where the company sits today:
+
+| Level | Name | Evidence from Interview |
+|-------|------|----------------------|
+| Level 1 | Unregulated Chatbots | [quote] |
+| Level 2 | Claude Code & Internal Workflows | [quote] |
+| Level 3 | Open-Loop Agents | [quote] |
+| Level 4 | Closed-Loop Self-Learning | [quote] |
+| Level 5 | Ubiquitous Agent Workforce | [quote] |
+
+**What this means for your business:** [2-3 sentences translating the current level into business risk, competitive exposure, or missed opportunity]
+
+**The gap to close:** [Level X → Level Y. What needs to happen to move up?]
+
+---
 
 ## Tier Recommendation
-[Based on interview findings, recommend the appropriate starting agent tier:
-- Tier 1: Q&A Bot
-- Tier 2: Knowledge Agent (RAG over enterprise corpus)
-- Tier 3: Workflow Runner (approval gates, reads + writes)
-- Tier 4: Review/QA Agent
-- Tier 5: Autonomous Research/Decision Agent
-If recommending Tier 5 but zero current agents in production: downgrade to Tier 2/3 with rationale.]
+
+Based on interview findings, recommend the appropriate starting agent tier:
+
+| Tier | Name | What It Does | Build Cost | Pilot Duration | Success Metric |
+|------|------|-------------|------------|----------------|----------------|
+| Tier 1 | Q&A Bot | Static FAQ + RAG | £5–15k | 2–4 weeks | Support ticket reduction |
+| Tier 2 | Knowledge Agent | RAG over enterprise corpus | £15–50k | 4–8 weeks | Weekly adoption rate |
+| Tier 3 | Workflow Runner | Multi-step execution with approval gates | £50–150k | 6–12 weeks | Time saved per run |
+| Tier 4 | Review/QA Agent | Judges another system's output | £30–100k | 6–10 weeks | Catch rate vs. human |
+| Tier 5 | Autonomous Research Agent | Multi-day work, spawns subagents | £150k+ | 12–24 weeks | Decision quality vs. baseline |
+
+**Recommended starting tier:** [Tier X] — [plain-English rationale. If Tier 5 with zero agents in production: downgrade to Tier 2 or 3 with explicit explanation of why]
 
 ## Portfolio Scan — Named Agent Projects
 [Table: Project Name | Target Tier | Priority | Pilot Scope | Key Blocker]
 [What specific agent projects did the company name? How are they prioritised?]
 
 ## Layer Inflection Exposure
-[Assess which of the Seven Layers the company is trying to transform:
-- L1: Foundation primitives (LLM API, vector DB)
-- L2: Connectors (MCP servers, API wrappers)
-- L3: Orchestration (agent framework, memory, tools)
-- L4: Domain logic (prompts, workflows, business rules)
-- L5: Evaluation (test suites, hit-rate tracking)
-- L6: Interface (dashboards, notification routing)
-- L7: Governance (budget hard-stops, audit trail)
-Note which layers are named vs. missing. Flag skipped-layer patterns.]
+
+Assess which of the seven Agent Factory Layers the company is trying to transform. Reference: [AgentDash Research — Factory Layers](https://washington-smoky.vercel.app/factory-layers)
+
+| Layer | Name | Status | Evidence from Interview | Recommendation |
+|-------|------|--------|----------------------|----------------|
+| L1 | Inference | CONFIRMED / MISSING | [quote from interview] | BUY / WAIT |
+| L2 | Agent Primitives | CONFIRMED / MISSING | [quote] | BUY |
+| L3 | Orchestration | CONFIRMED / MISSING | [quote] | BUY |
+| L4 | Protocol (MCP) | CONFIRMED / MISSING | [quote] | BUY |
+| L5 | Workspace | CONFIRMED / MISSING | [quote] | BUILD |
+| L6 | Control Plane | CONFIRMED / MISSING | [quote] | BUILD |
+| L7 | Trust & Safety | CONFIRMED / MISSING | [quote] | SKIP (provider-owned) |
+
+**Skipped-layer pattern:** [Flag if the company is trying to transform L5/L6 without named L1/L2/L3/L4. This is the most common failure mode.]
 
 ## Org Readiness Breakdown
 [Bold-named dimensions assessed:
@@ -272,15 +302,31 @@ function fillSpecTemplate(spec, state) {
 }
 
 /**
+ * Find the first text block in a Claude API response content array.
+ * The response may contain thinking blocks before the text block.
+ */
+function getTextContent(result) {
+  if (!result.content) return '';
+  for (const block of result.content) {
+    if (block.type === 'text') return block.text || '';
+  }
+  return '';
+}
+
+/**
  * Crystallise the interview into a spec document.
  * @param {object} state
  * @returns {Promise<string>}
  */
 export async function crystallise(state) {
   const Anthropic = (await import('@anthropic-ai/sdk')).default;
-  const apiKey = process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY;
+  const apiKey =
+    process.env.ANTHROPIC_API_KEY ||
+    process.env.CLAUDE_API_KEY ||
+    process.env.ANTHROPIC_AUTH_TOKEN ||
+    null;
   if (!apiKey) {
-    throw new Error('ANTHROPIC_API_KEY (or CLAUDE_API_KEY) is not set.');
+    throw new Error('ANTHROPIC_API_KEY (or CLAUDE_API_KEY or ANTHROPIC_AUTH_TOKEN) is not set.');
   }
 
   const client = new Anthropic({ apiKey });
@@ -311,7 +357,7 @@ export async function crystallise(state) {
     }
   }
 
-  const raw = result.content[0]?.text || '';
+  const raw = getTextContent(result);
   return fillSpecTemplate(raw, state);
 }
 
@@ -322,7 +368,11 @@ export async function crystallise(state) {
  */
 export async function extractOntology(state) {
   const Anthropic = (await import('@anthropic-ai/sdk')).default;
-  const apiKey = process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY;
+  const apiKey =
+    process.env.ANTHROPIC_API_KEY ||
+    process.env.CLAUDE_API_KEY ||
+    process.env.ANTHROPIC_AUTH_TOKEN ||
+    null;
   if (!apiKey) return {};
 
   const client = new Anthropic({ apiKey });
