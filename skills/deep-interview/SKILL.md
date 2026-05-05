@@ -48,7 +48,19 @@ Company-level assessments surface the gap between ambition and operational readi
 
 ## Phase 1: Track Detection + Intake
 
-### Step 1: Detect or ask the assessment track
+### Step 0: Set expectations
+
+Before we start, here's what you'll get at the end:
+
+AskUserQuestion
+  question: "Here's what you get when we're done:\n\n**1. Markdown report** — saved to `./specs/deep-interview-[slug].md` on your machine\n\n**2. DOCX report** — Word document version of the same assessment, ready to share with your team\n\nBoth contain your AI readiness score, dimension breakdown, tier recommendation, strategic roadmap (company-level) or project charter (project-level), and recommended next steps.\n\nAll files stay on your machine — nothing is uploaded or shared. Ready to begin?"
+  header: "What You Get"
+  options:
+    - label: "Let's begin"
+    - label: "I have questions first"
+  multiSelect: false
+
+If "I have questions first" is selected, answer their questions, then repeat this step until they select "Let's begin".
 
 Extract from `{{ARGUMENTS}}` if the user specified it. Look for keywords:
 
