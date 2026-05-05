@@ -1,5 +1,37 @@
 ## Phase 5: Assessment Crystallisation
 
+### Step 0: Research (required — do this before crystallising)
+
+**This step is mandatory for company-level assessments.** It injects competitive intelligence into the spec so the output is grounded in real market data, not just the interview transcript.
+
+Run `last30days` research to gather:
+1. **Sector trends:** What are companies in this industry saying about AI agent adoption? What's working? What's failing?
+2. **Competitor case studies:** Any public case studies of AI agent deployments in this sector?
+3. **ROI benchmarks:** What ROI or efficiency gains are reported?
+4. **Failure modes:** What are the common failure patterns for AI adoption in this domain?
+
+**For company-level**, run these queries:
+- `last30days AI agent adoption [sector] enterprise 2026`
+- `last30days [known competitor or peer company] AI automation`
+
+**For project-level**, run:
+- `last30days [tool/technique named in interview] AI agent ROI 2026`
+- `last30days enterprise AI agent failure modes [domain] 2026`
+
+**Save research to file** so `deep-interview crystal` can inject it:
+```
+~/.agentic-readiness/research/[sessionId].md
+```
+
+Example — run via Bash:
+```bash
+mkdir -p ~/.agentic-readiness/research
+# After last30days completes, copy the output to:
+cp /tmp/last30days-output.md ~/.agentic-readiness/research/[sessionId].md
+```
+
+**CRITICAL:** The research file must exist before running `deep-interview crystal`. If no research is available, crystallise will still run (research is optional for project-level).
+
 ### Step 1: Run the crystal command
 
 ```

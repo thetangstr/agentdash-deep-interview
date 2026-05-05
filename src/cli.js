@@ -411,7 +411,7 @@ async function cmdCrystallize(args) {
   const { crystallise } = await import('./spec.js');
   const { specPath } = await import('./output.js');
   const { ensureDir } = await import('./output.js');
-  const { writeFileSync, mkdirSync } = await import('fs');
+  const { writeFileSync, mkdirSync, readFileSync, existsSync } = await import('fs');
   const path = await import('path');
 
   const sessionId = args['session-id'] || null;
@@ -428,8 +428,25 @@ async function cmdCrystallize(args) {
   // Ensure output dir
   mkdirSync(path.resolve(outputDir), { recursive: true });
 
+  // Load research context if available (written by last30days research step)
+  let researchContext = null;
+  const researchPath = path.resolve(
+    process.env.HOME || '',
+    '.agentic-readiness',
+    'research',
+    `${state.sessionId}.md`
+  );
+  if (existsSync(researchPath)) {
+    try {
+      researchContext = readFileSync(researchPath, 'utf8');
+      console.log('Research context loaded from:', researchPath);
+    } catch {
+      // ignore — research is optional
+    }
+  }
+
   console.log('Crystallising spec...');
-  const spec = await crystallise(state);
+  const spec = await crystallise(state, researchContext);
 
   writeFileSync(filePath, spec, 'utf8');
 

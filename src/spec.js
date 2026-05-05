@@ -26,6 +26,10 @@ function projectSpecSystemPrompt() {
   return `You are a Senior Strategy Consultant at AgentDash Consulting. Your job is to
 produce a CRYSTALLISED PROJECT CHARTER from a Socratic interview transcript.
 
+IMPORTANT: If a "RESEARCH CONTEXT" section appears in the user prompt (from last30days), you MUST
+incorporate that research into the spec — especially into the Problem Statement, Risk & Governance,
+and Peer Benchmarks sections. Ground every claim in evidence from the research where available.`;
+
 FORMAT REQUIREMENTS:
 Write the spec in clean Markdown. Do NOT use markdown code fences — write directly to the document.
 
@@ -111,6 +115,12 @@ Apply the Agent Factory Layers framework. Commodity layers → buy. Differentiat
 function companySpecSystemPrompt() {
   return `You are a Senior Strategy Consultant at AgentDash Consulting. Your job is to
 produce a CRYSTALLISED PORTFOLIO SCAN from a company-level strategic assessment interview.
+
+IMPORTANT: If a "RESEARCH CONTEXT" section appears in the user prompt (from last30days), you MUST
+incorporate that research into the spec — especially into the Executive Summary, Competitive Landscape,
+Peer Case Studies, and Risk Register sections. Ground every recommendation in evidence from the
+research where available. If the research contradicts an assumption from the interview, note the
+discrepancy explicitly.`;
 
 FORMAT REQUIREMENTS:
 Write in clean Markdown. Do NOT use markdown code fences — write directly to the document.
@@ -228,9 +238,10 @@ Assess which of the seven Agent Factory Layers the company is trying to transfor
 /**
  * Build the user prompt for spec crystallisation.
  * @param {object} state
+ * @param {string} [researchContext] - Optional research from last30days
  * @returns {string}
  */
-function buildSpecUserPrompt(state) {
+function buildSpecUserPrompt(state, researchContext) {
   const { seed, answers, dimensions, ontology, round, depth, slug, track } = state;
 
   const lines = [
@@ -261,6 +272,14 @@ function buildSpecUserPrompt(state) {
 
   lines.push('');
   lines.push(`SEED: ${seed}`);
+
+  if (researchContext) {
+    lines.push('');
+    lines.push('--- RESEARCH CONTEXT (from last30days) ---');
+    lines.push(researchContext);
+    lines.push('--- END RESEARCH ---');
+  }
+
   lines.push('');
   lines.push('INTERVIEW TRANSCRIPT:');
   if (!answers.length) {
@@ -316,9 +335,10 @@ function getTextContent(result) {
 /**
  * Crystallise the interview into a spec document.
  * @param {object} state
+ * @param {string} [researchContext] - Optional research from last30days
  * @returns {Promise<string>}
  */
-export async function crystallise(state) {
+export async function crystallise(state, researchContext) {
   const Anthropic = (await import('@anthropic-ai/sdk')).default;
   const apiKey =
     process.env.ANTHROPIC_API_KEY ||
@@ -332,7 +352,7 @@ export async function crystallise(state) {
   const client = new Anthropic({ apiKey });
   const track = state.track || 'project';
   const system = specSystemPrompt(track);
-  const user = buildSpecUserPrompt(state);
+  const user = buildSpecUserPrompt(state, researchContext);
 
   let result;
   try {
